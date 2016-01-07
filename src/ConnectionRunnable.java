@@ -8,6 +8,10 @@ import java.net.Socket;
 import java.util.HashMap;
 
 public class ConnectionRunnable implements Runnable{
+	
+	//Lab2
+	private Downloader m_Downloader;
+	
 	private Socket m_clientSocket = null;
 	private boolean m_isRun = true;
 	private MyThread myThread;
@@ -26,6 +30,9 @@ public class ConnectionRunnable implements Runnable{
 		this.myThread = myThread;
 		this.m_Root = i_Root;
 		this.m_DefaultPage = i_DeafultPage;
+		
+		// Lab2
+		m_Downloader = new Downloader();
 
 	}
 
@@ -97,13 +104,13 @@ public class ConnectionRunnable implements Runnable{
 						m_OutToClient.write(html);
 					}
 
-					if (m_HttpRequest.getHTMLParams() != null){
+/*					if (m_HttpRequest.getHTMLParams() != null){
 						if (m_IsChunked){
 							m_OutToClient.writeBytes(Integer.toHexString(m_HttpRequest.getHTMLParams().length()));
 							m_OutToClient.writeBytes("\r\n");
 						}
 						m_OutToClient.writeBytes(m_HttpRequest.getHTMLParams());
-					}
+					}*/
 					
 					// TODO: Consider moving this method to HTTPRequest.
 					if (m_IsChunked){
@@ -126,7 +133,14 @@ public class ConnectionRunnable implements Runnable{
 						m_OutToClient.writeBytes("\r\n");
 						m_OutToClient.writeBytes("\r\n");
 					}
-
+					
+					
+					//Lab2
+					if(!m_HttpRequest.getHTMLParams().isEmpty()){
+						m_Downloader.initParams(m_HttpRequest.getHTMLParams());
+						m_HttpRequest.printDictionary(m_Downloader.getHashedURL());
+					}
+					
 					clearRequestedData();
 				}
 			}

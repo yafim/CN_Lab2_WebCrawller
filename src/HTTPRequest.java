@@ -16,7 +16,8 @@ import java.util.TimeZone;
  * @authors Yafim Vodkov 308973882 , Nir Tahan 305181166
  */
 public class HTTPRequest {
-	private String m_HTMLParams;
+//	private String m_HTMLParams;
+	private HashMap<String, String> m_HTMLParams;
 	private BufferedReader m_In;
 	/** Errors and messages to the client */
 	private final String ERR_NOT_IMPEMENTED = "501 Not Implemented";
@@ -159,9 +160,10 @@ public class HTTPRequest {
 			createResponseHeader();
 		}
 		
-		if (isPramsInfoForm()){
+		//TODO: Other flag
+//		if (isPramsInfoForm()){
 			parseInfoFormParams();
-		}
+//		}
 		buildResponseMessage();
 		return m_HTTPResponse;
 	}
@@ -172,16 +174,21 @@ public class HTTPRequest {
 
 			String htmlParams = "";
 			HashMap<String, Object> requestedVariables = getVariablesAsBytes();
+			
+			m_HTMLParams = new HashMap<String,String>();
 
 			for (Map.Entry<String,Object> entry : requestedVariables.entrySet()) {
 				String key = entry.getKey();
 				String value = entry.getValue().toString();	
 				
+				m_HTMLParams.put(key, value);
 				htmlParams += key + " : <input type=\"text\" value=\"" + 
 				value + "\"> <br>";
+				
+//				System.err.println("Key: " + key + "Value: " + value); //debug
 			}
 				m_RequestedVariablesLength = htmlParams.length();
-				m_HTMLParams = htmlParams;
+//				m_HTMLParams = htmlParams;
 	}
 
 	/**
@@ -763,7 +770,8 @@ boolean m_Error = false; // TODO
 	public boolean isOK() {return m_ResponseMessage.equals(OK_MSG);}
 	public boolean isNotFound() {return m_ResponseMessage.equals(ERR_FILE_NOT_FOUND);}
 	public String getNotFoundMessage = ERR_FILE_NOT_FOUND;
-	public String getHTMLParams() {return m_HTMLParams;}
+//	public String getHTMLParams() {return m_HTMLParams;}
+	public HashMap<String, String> getHTMLParams() {return m_HTMLParams;}
 	
 	/*************************** ---  DELETE  ---**********************************/
 	/**
