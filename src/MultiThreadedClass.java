@@ -14,6 +14,7 @@ public class MultiThreadedClass implements Runnable {
 	protected boolean isStopped = false;
 	protected MyThreadPool threadPool;
 	protected String m_DefaultPage;
+	private PriorityTaskManager m_taskManager;
 	
 	public MultiThreadedClass(int i_Port, String i_Root, String i_DefaultPage){
 		this.m_Root = i_Root;
@@ -44,9 +45,10 @@ public class MultiThreadedClass implements Runnable {
 				throw new RuntimeException(
 						"Error accepting client connection", e);
 			}
-			//The moment a client has connected it tells the thread pool 
-			//to find an available thread for him from the thread pool
-			this.threadPool.execute(clientSocket);            
+			
+			//!!!!!Something will happen here that will start everything and will add the task of the first
+			//downloader with the first url that is given. we will not have sockets here!!!
+			////////////////////////this.m_taskManager.addDownloaderTask(url)            
 		}
 		//Just in case we would like to give an option to shut down the server i
 		//implemented the shut down method.
@@ -59,7 +61,9 @@ public class MultiThreadedClass implements Runnable {
 	 * handle all clients here and starting the server. 
 	 */
 	public void startTheServer(int i_MaxThreads) {
-		threadPool = new MyThreadPool(i_MaxThreads, m_Root, m_DefaultPage);
+		m_taskManager = new PriorityTaskManager();
+		threadPool = new MyThreadPool(i_MaxThreads, m_Root, m_DefaultPage, m_taskManager);
+		m_taskManager.setThreadPool(threadPool);
 		new Thread(this).start();
 	}
 
