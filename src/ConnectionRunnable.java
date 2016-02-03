@@ -32,7 +32,7 @@ public class ConnectionRunnable implements Runnable{
 		this.m_DefaultPage = i_DeafultPage;
 
 		// Lab2
-		m_Downloader = new Downloader();
+		//m_Downloader = new Downloader();
 
 	}
 
@@ -58,7 +58,7 @@ public class ConnectionRunnable implements Runnable{
 
 	private void runTask() {
 		m_task.doTask();
-		myThread.onTaskComplete();
+		myThread.onTaskComplete();		
 	}
 
 //	InputStream input;

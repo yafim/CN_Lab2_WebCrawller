@@ -8,8 +8,5 @@ public class DownloaderTask implements CrawlerTask{
 
 	@Override
 	public void doTask() {
-		// TODO Auto-generated method stub
-		
-		// ad analyzer task
 	}
 }
