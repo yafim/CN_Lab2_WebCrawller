@@ -13,18 +13,20 @@ public class DownloaderTask implements CrawlerTask{
 	
 	@Override
 	public void doTask() {
-		System.out.println("Downloader start downloading " + url);
+		System.out.println("Downloader starts downloading URL " + url);
 		
 		Downloader downloader;
 		try {
 			downloader = new Downloader(url);
 			String content = downloader.getHTMLPageData();
-		
+
 			// add analyzer task
 			crawlerJobManager.addAnalayzerTask(url, content, crawlerJobManager);
 		} catch (Exception e) {
 			System.out.println("Error with downloading " + url + ". Print stack trace:");
 			e.printStackTrace();
 		}
+		
+		System.out.println("Downloader ends downloading the URL " + url);
 	}
 }

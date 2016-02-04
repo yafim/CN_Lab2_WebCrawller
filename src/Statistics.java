@@ -15,7 +15,7 @@ public class Statistics {
 	private int numberOfInternalLinks = 0; 
 	private int numberOfExternalLinks = 0;
 	private int numberOfDomains = 0;
-	private ArrayList<String> domainsNames;
+	private ArrayList<String> connectedDomains;
 	private ArrayList<String> openedPorts;
 	private int sumOfAllRTTTimes = 0;
 	private int numberOfRTT = 0;
@@ -24,7 +24,7 @@ public class Statistics {
 	{
 		this.isRespectedRobot = isRespectedRobot;
 		this.isRequestedOpenPorts = isRequestedOpenPorts;
-		this.domainsNames = new ArrayList<String>();
+		this.connectedDomains = new ArrayList<String>();
 		this.openedPorts = new ArrayList<String>();
 	}
 	
@@ -52,10 +52,13 @@ public class Statistics {
 		this.numberOfPages++;
 	}
 	
-	public void addDomain(String domainName)
+	public void addConnectedDomain(String domainName)
 	{
+		if (connectedDomains.contains(domainName))
+			return;
+		
 		this.numberOfDomains++;
-		this.domainsNames.add(domainName);
+		this.connectedDomains.add(domainName);
 	}
 	
 	public void addPort(String portNumber)
@@ -98,9 +101,5 @@ public class Statistics {
 		} else {
 			System.out.println("Robots.txt file is not respected");
 		}
-			
-		
-		
-		
-	}	
+	}
 }
