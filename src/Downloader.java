@@ -344,6 +344,7 @@ public class Downloader{
 					fileCreated = true;
 				}
 				writeToHTMLFile(f, str);
+				System.out.println(read);
 				if (!m_Robots){
 					m_HTMLPageData = (str.substring(0, str.length()));
 				}

@@ -147,7 +147,8 @@ public class ClientCommunication {
 							m_OutToClient.writeBytes(newHeader);
 						}
 						System.out.println(m_Downloader.getHTMLPageData());
-						//return;
+						return;
+						
 					} else {
 						m_OutToClient.writeBytes(head);
 						if (html != null){
@@ -159,7 +160,7 @@ public class ClientCommunication {
 
 
 					clearRequestedData();
-					//return;
+			//		return;
 					//System.out.println("clear");
 				}
 			}
