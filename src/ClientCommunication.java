@@ -146,8 +146,8 @@ public class ClientCommunication {
 //							System.err.println(newHeader);							
 							m_OutToClient.writeBytes(newHeader);
 						}
-						
-						//return;
+						System.out.println(m_Downloader.getHTMLPageData());
+						return;
 					} else {
 						m_OutToClient.writeBytes(head);
 						if (html != null){
