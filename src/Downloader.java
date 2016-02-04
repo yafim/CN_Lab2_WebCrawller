@@ -1,10 +1,16 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,12 +18,12 @@ import java.util.Map;
  * Create HTTP Request and get file content by URL.
  */
 public class Downloader{
-	
+
 	private final int TIMEOUT = 22;
 	private final int PORT = 80;
 	private final int MAX_REDIRECTIONS = 5;
 	private final int BUFFER_SIZE = 1024;
-	
+
 	private HashMap<String, String> m_URLHeaders;
 
 	private Socket m_Socket;
@@ -28,11 +34,11 @@ public class Downloader{
 	private String m_RobotsFile;
 	private String m_Host = "";
 	private String m_HTMLPageData;
-	
+
 	private int m_chunkedFileSize;
 	private int m_Redirections = 0;
 	private int m_RequestedFileSize = 0;
-	
+
 	private boolean m_IsChunked = false;
 	private boolean m_ErrorFound = false;
 	private boolean m_Robots = false;
@@ -43,11 +49,10 @@ public class Downloader{
 	public String getRobotsFile() {return this.m_RobotsFile;}
 	public int getContentLength() {return (m_IsChunked) ? this.m_chunkedFileSize : this.m_HTMLPageData.length();}
 	public boolean isRobotsEnabled() {return !this.m_RobotsFile.isEmpty();}
-	
+
 	private TimeoutTimer timer;
 	private boolean m_IsRobots;
 	private boolean m_IsTCP;
-    
 
 	/**
 	 * Initialises a new instance of the Downloader class.
@@ -55,6 +60,7 @@ public class Downloader{
 	 * @throws Exception 
 	 */
 	public Downloader(String i_URL) throws Exception{
+
 		getHTTPRequestData(false, i_URL);
 		checkRobotsFile();
 	}
@@ -121,14 +127,14 @@ public class Downloader{
 
 		int newLineFlag = 0;
 		m_IsChunked = false;
-        
+
 		timer = new TimeoutTimer(TIMEOUT);
-		
+
 		while ((c = i_Reader.read()) != -1) {
 			if (timer.timeOut){
 				throw new Exception("Timeout...");
 			}
-			
+
 			header += (char) c;
 			if ((char) c == '\r'){
 				c = (char)i_Reader.read();
@@ -177,7 +183,7 @@ public class Downloader{
 	 */
 	private void setHeader(String i_Header){
 		String[] splittedString;
-	//	System.out.println(i_Header);
+		//	System.out.println(i_Header);
 		try{
 			splittedString = i_Header.replaceAll("\\s","").split(":", 2);
 			m_URLHeaders.put(splittedString[0], splittedString[1]);
@@ -223,7 +229,7 @@ public class Downloader{
 		m_ErrorFound = false;
 		m_RobotsFile = "";
 		m_HTMLPageData = "";
-	//	timer = null;
+		//	timer = null;
 	}
 
 	/**
@@ -268,13 +274,16 @@ public class Downloader{
 		boolean isHTMLBody = false;
 
 		while ((line = i_Reader.readLine()) != null) {
-			m_HTMLPageData += line;
-			//	System.out.println(line);
+
+			//		System.out.println(line);
 			if (m_Robots){
 				if (line.isEmpty()){
 					break;
 				}
 				m_RobotsFile += line;
+			}
+			else {
+				m_HTMLPageData += line;
 			}
 
 			if (line.contains("body")){
@@ -311,7 +320,7 @@ public class Downloader{
 
 		return (m_IsChunked) ? m_RequestedFileSize : Integer.parseInt(m_URLHeaders.get("Content-Length"));
 	}
-	
+
 	/**
 	 * Read file by chunks
 	 * @param i_Reader
@@ -322,35 +331,82 @@ public class Downloader{
 		int read;
 		int fileSize = 0;
 		StringBuilder str = new StringBuilder();
-		
+		File f = null;
+		boolean fileCreated = false;
 		try{
 			while((read = i_Reader.read(buffer)) != -1){
 				fileSize += read;
-				
 				str.append(buffer, 0, read);
 				buffer = new char[BUFFER_SIZE];
 				
-				if(read < BUFFER_SIZE){
+				if (!fileCreated){
+					f = createHTMLFile();
+					fileCreated = true;
+				}
+				writeToHTMLFile(f, str);
+				m_HTMLPageData = (str.substring(0, str.length()));
+			
+				if(read < BUFFER_SIZE || read == 0){
 					m_chunkedFileSize = fileSize;
 					if (m_Robots){
-						m_RequestedFile = str.substring(0, str.length());
+						//m_RequestedFile = str.substring(0, str.length());
+						m_RobotsFile = str.substring(0, str.length());
 					}
 					else {
 						if(!onlyHeaders){
-							m_HTMLPageData = str.substring(0, str.length());
+						//	m_HTMLPageData = str.substring(0, str.length());
+						//	System.out.println(m_HTMLPageData);
 						} else {
 							m_RequestedFileSize = fileSize;
 						}
 					}
+					i_Reader.close();
 					break;
 				}
 			}
+			System.out.println("Done");
 		}
 		catch (Exception e){
 
 		}
 	}
 	
+	private void writeToHTMLFile(File f, StringBuilder str){
+		//write to file
+		Writer writer = null;
+
+		try {
+		    writer = new BufferedWriter(new OutputStreamWriter(
+		          new FileOutputStream(f), "utf-8"));
+
+		    writer.write(str.substring(0, str.length()));
+
+		} catch (IOException ex) {
+		  // report
+		} finally {
+		   try {writer.close();} catch (Exception ex) {}
+		}
+	}
+	private File createHTMLFile(){
+		Date date = new Date();
+		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
+		String fileName = "_" + dateFormat.format(date);
+
+		String path = "c:\\serverroot" + File.separator + "CrawlerResults" + File.separator + fileName + ".txt";
+		// Use relative path for Unix systems
+		File f = new File(path);
+		
+		f.getParentFile().mkdirs(); 
+		try {
+			f.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return f;
+	//DELETE
+	}
+
 	/**
 	 * Get file full name. Supports all file extensions.
 	 * @param i_FilePath
@@ -382,39 +438,46 @@ public class Downloader{
 		String fixedFileURL = FilePath.contains("http://") ? FilePath.replace("http://", "") : FilePath;
 		return fixedFileURL.contains("www.") ? fixedFileURL.replace("www.", "") : fixedFileURL;
 	}
-	
-	public void initParams(HashMap<String, String> i_Params){
-		try{
-			parseParams(i_Params);
-			getHTTPRequestData(false, m_URL);
-			checkRobotsFile();
-		}
-		catch (Exception e){
-			System.out.println(e.getMessage());
-		}
+
+	public void initParams(HashMap<String, String> i_Params) throws Exception{
+		parseParams(i_Params);
+		getHTTPRequestData(false, m_URL);
+		checkRobotsFile();
 	}
-	
+
 	private void parseParams(HashMap<String, String> i_Params) throws Exception{
 		for (Map.Entry<String,String> entry : i_Params.entrySet()) {
 			String key = entry.getKey();
 			String value = entry.getValue();
-			
+
 			switch(key){
-				case "textBoxURL":
-					m_URL = getFixedURL(value);
-					break;
-				case "checkBoxTCP":
-					m_IsTCP = (value.equals("on"));
-					break;
-				case "checkBoxRobots":
-					m_IsRobots = (value.equals("on"));
-					break;						
+			case "textBoxURL":
+				m_URL = getFixedURL(value);
+				break;
+			case "checkBoxTCP":
+				m_IsTCP = (value.equals("on"));
+				break;
+			case "checkBoxRobots":
+				m_IsRobots = (value.equals("on"));
+				break;						
 			}
-			
+
 			if (m_URL == ""){
 				throw new Exception("Bad URL was given");
 			}
 		}
 	}
-
+	
+	public String getRequestedUrl() {
+		return m_URL;
+	}
+	
+	public boolean isTCPOpenPortsRequested() {
+		return m_IsTCP;
+	}
+	
+	public boolean isRobotFileRespected() {
+		return m_IsRobots;
+	}
+	
 }

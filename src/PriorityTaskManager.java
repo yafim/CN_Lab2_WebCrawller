@@ -17,15 +17,15 @@ public class PriorityTaskManager {
 		this.threadPool = threadPool;
 	}
 	
-	public void addDownloaderTask(String url) {
-		DownloaderTask task = new DownloaderTask(url);
+	public void addDownloaderTask(String url, CrawlerJobManager crawlerJobManager) {
+		DownloaderTask task = new DownloaderTask(url, crawlerJobManager);
 		
 		if (threadPool.executeIfFree(task) == false)
 			waitDownTasks.add(task);
 	} 
 	
-	public void addAnalyzerTask(String url, String content) {
-		AnalyzerTask task = new AnalyzerTask(url, content);
+	public void addAnalyzerTask(String url, String content, String domain, CrawlerJobManager crawlerJobManager) {
+		AnalyzerTask task = new AnalyzerTask(url, content, domain, crawlerJobManager);
 		
 		if (threadPool.executeIfFree(task) == false)
 			waitAnalyzerTasks.add(task);

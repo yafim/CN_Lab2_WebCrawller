@@ -1,7 +1,15 @@
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.omg.PortableServer.Servant;
 
@@ -24,6 +32,8 @@ public class Main {
 	private static ArrayList<String> m_VideoExtensions;
 	private static ArrayList<String> m_DocumentExtensions;
 	
+	private static MultiThreadedClass server;
+	
 	public static void main(String[] args){
 		
 		try {
@@ -31,9 +41,21 @@ public class Main {
 			initParams();
 			printParams();
 			
-			MultiThreadedClass server = new MultiThreadedClass(m_Port, m_Root, m_DefaultPage);
+			server = new MultiThreadedClass(m_Port, m_Root, m_DefaultPage);
 			server.startTheServer(m_MaxThreads);
 			System.out.println("Listening on port " + m_Port);
+			ClientCommunication clientCommunication = new ClientCommunication(m_Root, m_Port, m_DefaultPage);
+			clientCommunication.doClientRequestFlow();
+			
+			String requestedUrl = clientCommunication.getRequestedUrl();
+			boolean isRespectedRobotFile = clientCommunication.isRobotFileRespected();
+			boolean isRequestedTcpPortsScan = clientCommunication.isTCPOpenPortsRequested();
+			String[] robotsFileContent = clientCommunication.getRobotsFileContent();
+			
+			ExtensionsChecker extensionChecker = new ExtensionsChecker(m_ImageExtensions, m_VideoExtensions, m_DocumentExtensions);
+			// change it
+			CrawlerJobManager crawlerManager = new CrawlerJobManager(server, requestedUrl, isRespectedRobotFile, isRequestedTcpPortsScan, extensionChecker);
+			crawlerManager.start(robotsFileContent);
 			
 			// Remove this logic from here...
 
@@ -68,7 +90,7 @@ public class Main {
 			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
 		}
 	}		
-	
+			
 	/**
 	 * Initial parameters from Config.ini file.
 	 */

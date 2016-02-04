@@ -26,34 +26,34 @@ public class MultiThreadedClass implements Runnable {
 	 * starting to run the server here after therad.start was activated
 	 */
 	public void run(){
-		openServerSocket();
-		while(!isStopped){
-			//At the beginning no client has connected so the client
-			//socket is obviously null
-			Socket clientSocket = null;
-			try {
-				//The thread that running this server stops at this line
-				//and waits for a client to connect.
-				clientSocket = this.serverSocket.accept();
-			} catch (IOException e) {
-				System.err.println(e.getMessage());
-				System.out.println("SOCKET CLOSED : " + serverSocket.isClosed());
-				if(isStopped) {
-					System.out.println("Server Stopped.") ;
-					break;
-				}
-				throw new RuntimeException(
-						"Error accepting client connection", e);
-			}
-			
-			//!!!!!Something will happen here that will start everything and will add the task of the first
-			//downloader with the first url that is given. we will not have sockets here!!!
-			////////////////////////this.m_taskManager.addDownloaderTask(url)            
-		}
-		//Just in case we would like to give an option to shut down the server i
-		//implemented the shut down method.
-		this.threadPool.shutdown();
-		System.out.println("Server Stopped.") ;
+//		openServerSocket();
+//		while(!isStopped){
+//			//At the beginning no client has connected so the client
+//			//socket is obviously null
+//			Socket clientSocket = null;
+//			try {
+//				//The thread that running this server stops at this line
+//				//and waits for a client to connect.
+//				clientSocket = this.serverSocket.accept();
+//			} catch (IOException e) {
+//				System.err.println(e.getMessage());
+//				System.out.println("SOCKET CLOSED : " + serverSocket.isClosed());
+//				if(isStopped) {
+//					System.out.println("Server Stopped.") ;
+//					break;
+//				}
+//				throw new RuntimeException(
+//						"Error accepting client connection", e);
+//			}
+//			
+//			//!!!!!Something will happen here that will start everything and will add the task of the first
+//			//downloader with the first url that is given. we will not have sockets here!!!
+//			////////////////////////this.m_taskManager.addDownloaderTask(url)            
+//		}
+//		//Just in case we would like to give an option to shut down the server i
+//		//implemented the shut down method.
+//		this.threadPool.shutdown();
+//		System.out.println("Server Stopped.") ;
 	}
 
 	/**
@@ -62,7 +62,7 @@ public class MultiThreadedClass implements Runnable {
 	 */
 	public void startTheServer(int i_MaxThreads) {
 		m_taskManager = new PriorityTaskManager();
-		threadPool = new MyThreadPool(i_MaxThreads, m_Root, m_DefaultPage, m_taskManager);
+		threadPool = new MyThreadPool(i_MaxThreads, m_taskManager);
 		m_taskManager.setThreadPool(threadPool);
 		new Thread(this).start();
 	}
@@ -86,4 +86,22 @@ public class MultiThreadedClass implements Runnable {
 			throw new RuntimeException("Cannot open port " + m_Port, e);
 		}
 	}
+
+	public void startCrawlerFlow(CrawlerJobManager crawlerJob) {
+		String domain = crawlerJob.getDomain();
+		addDownloaderTask(domain, crawlerJob);
+	}
+	
+	public void addDownloaderTask(String url, CrawlerJobManager crawlerJob) {
+		m_taskManager.addDownloaderTask(url, crawlerJob);
+	}
+
+	public void addAnalayzerTask(String url, String content, String domain, CrawlerJobManager crawlerManager) {
+		m_taskManager.addAnalyzerTask(url, content, domain, crawlerManager);
+		
+	}
+	
+	
+	
+	
 }
