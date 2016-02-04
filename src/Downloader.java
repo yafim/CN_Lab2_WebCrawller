@@ -6,6 +6,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Create HTTP Request and get file content by URL.
@@ -44,6 +45,8 @@ public class Downloader{
 	public boolean isRobotsEnabled() {return !this.m_RobotsFile.isEmpty();}
 	
 	private TimeoutTimer timer;
+	private boolean m_IsRobots;
+	private boolean m_IsTCP;
     
 
 	/**
@@ -54,6 +57,10 @@ public class Downloader{
 	public Downloader(String i_URL) throws Exception{
 		getHTTPRequestData(false, i_URL);
 		checkRobotsFile();
+	}
+	
+	public Downloader(){
+		
 	}
 
 	/**
@@ -374,6 +381,40 @@ public class Downloader{
 		}
 		String fixedFileURL = FilePath.contains("http://") ? FilePath.replace("http://", "") : FilePath;
 		return fixedFileURL.contains("www.") ? fixedFileURL.replace("www.", "") : fixedFileURL;
+	}
+	
+	public void initParams(HashMap<String, String> i_Params){
+		try{
+			parseParams(i_Params);
+			getHTTPRequestData(false, m_URL);
+			checkRobotsFile();
+		}
+		catch (Exception e){
+			System.out.println(e.getMessage());
+		}
+	}
+	
+	private void parseParams(HashMap<String, String> i_Params) throws Exception{
+		for (Map.Entry<String,String> entry : i_Params.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+			
+			switch(key){
+				case "textBoxURL":
+					m_URL = getFixedURL(value);
+					break;
+				case "checkBoxTCP":
+					m_IsTCP = (value.equals("on"));
+					break;
+				case "checkBoxRobots":
+					m_IsRobots = (value.equals("on"));
+					break;						
+			}
+			
+			if (m_URL == ""){
+				throw new Exception("Bad URL was given");
+			}
+		}
 	}
 
 }

@@ -29,7 +29,7 @@ public class Main {
 		try {
 			m_ConfigFileParams = HTTPRequest.getConfigFileParams(sr_ConfigFile);
 			initParams();
-//			printParams();
+			printParams();
 			
 			MultiThreadedClass server = new MultiThreadedClass(m_Port, m_Root, m_DefaultPage);
 			server.startTheServer(m_MaxThreads);
@@ -37,7 +37,7 @@ public class Main {
 			
 			// Remove this logic from here...
 
-			try{
+/*			try{
 			//	new TimeOutTimer(5);
 			Downloader m_Downloader = new Downloader("www.ynet.com");
 				//Downloader m_Downloader = new Downloader("www.ynet.co.il");
@@ -61,8 +61,12 @@ public class Main {
 			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
 		} catch (Exception e){
 			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
+		}*/
+		} catch (UnsupportedEncodingException e) {
+			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
+		} catch (Exception e){
+			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
 		}
-		
 	}		
 	
 	/**
