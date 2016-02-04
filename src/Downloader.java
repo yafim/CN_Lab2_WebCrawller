@@ -344,13 +344,18 @@ public class Downloader{
 					fileCreated = true;
 				}
 				writeToHTMLFile(f, str);
-				m_HTMLPageData = (str.substring(0, str.length()));
+				if (!m_Robots){
+					m_HTMLPageData = (str.substring(0, str.length()));
+				}
+				else {
+					m_RobotsFile = str.substring(0, str.length());
+				}
 			
 				if(read < BUFFER_SIZE || read == 0){
 					m_chunkedFileSize = fileSize;
 					if (m_Robots){
 						//m_RequestedFile = str.substring(0, str.length());
-						m_RobotsFile = str.substring(0, str.length());
+					//	m_RobotsFile = str.substring(0, str.length());
 					}
 					else {
 						if(!onlyHeaders){
