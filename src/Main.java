@@ -57,6 +57,28 @@ public class Main {
 			CrawlerJobManager crawlerManager = new CrawlerJobManager(server, requestedUrl, isRespectedRobotFile, isRequestedTcpPortsScan, extensionChecker);
 			crawlerManager.start(robotsFileContent);
 			
+			// Remove this logic from here...
+
+			try{
+			//	new TimeOutTimer(5);
+			Downloader m_Downloader = new Downloader("www.ynet.com");
+				//Downloader m_Downloader = new Downloader("www.ynet.co.il");
+				System.out.println(m_Downloader.getContentLength());
+		//		System.out.println(m_Downloader.getHTMLPageData());
+				System.out.println(m_Downloader.getRobotsFile());
+				
+			System.out.println(m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4"));
+			System.out.println("Done");
+			} 
+			catch (Exception e){
+				System.out.println(e.getMessage());
+//				System.out.println("please check");
+//				e.printStackTrace();
+				
+			}
+//			System.out.println(m_Downloader.getHTMLPageData());
+			// end..
+			
 		} catch (UnsupportedEncodingException e) {
 			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
 		} catch (Exception e){

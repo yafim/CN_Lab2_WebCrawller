@@ -31,7 +31,6 @@ public class ConnectionRunnable implements Runnable{
 	}
 
 	private void runTask() {
-		m_task.doTask();
 		m_task = null;
 		myThread.onTaskComplete();		
 	}

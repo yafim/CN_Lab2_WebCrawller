@@ -1,7 +1,3 @@
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-
-
 public class DownloaderTask implements CrawlerTask{
 	private String url;
 	private CrawlerJobManager crawlerJobManager;
@@ -30,6 +26,5 @@ public class DownloaderTask implements CrawlerTask{
 			System.out.println("Error with downloading " + url + ". Print stack trace:");
 			e.printStackTrace();
 		}
-		
 	}
 }
