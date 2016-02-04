@@ -8,19 +8,12 @@ public class MyThreadPool {
 	private ArrayList<MyThread> m_busyThreads;
 	private int threadsNum;
 
-	private String m_Root;
-	private String m_DefaultPage;
-
 	private PriorityTaskManager m_taskManager;
 
-	public MyThreadPool(int threadsNum, String i_Root, String i_DefaultPage,
-			PriorityTaskManager i_taskManager) {
+	public MyThreadPool(int threadsNum, PriorityTaskManager i_taskManager) {
 		// Number of threads that will be created in the thread pool
 		this.threadsNum = threadsNum;
-
-		this.m_Root = i_Root;
-		this.m_DefaultPage = i_DefaultPage;
-
+		
 		this.m_taskManager = i_taskManager;
 		initializeThreads();
 	}
@@ -38,8 +31,7 @@ public class MyThreadPool {
 			// and manage my threads between being in busy thread list and
 			// available
 			// thread list
-			this.m_availableThreads.add(new MyThread(this, m_Root,
-					m_DefaultPage));
+			this.m_availableThreads.add(new MyThread(this));
 		}
 	}
 

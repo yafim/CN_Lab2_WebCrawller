@@ -1,14 +1,11 @@
-import java.net.Socket;
-
 public class MyThread {
 	private Thread thread;
 	private ConnectionRunnable runnable;
 	private MyThreadPool myThreadPool;
 
-	public MyThread(MyThreadPool myThreadPool, String i_Root,
-			String i_DefaultPage) {
+	public MyThread(MyThreadPool myThreadPool) {
 		this.myThreadPool = myThreadPool;
-		this.runnable = new ConnectionRunnable(this, i_Root, i_DefaultPage);
+		this.runnable = new ConnectionRunnable(this);
 		this.thread = new Thread(this.runnable);
 		// Tell the thread to start running and in case we have no client it
 		// will
