@@ -1,11 +1,16 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Reader;
+import java.io.Writer;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +54,6 @@ public class Downloader{
 	private boolean m_IsRobots;
 	private boolean m_IsTCP;
 
-
 	/**
 	 * Initialises a new instance of the Downloader class.
 	 * @param i_URL
@@ -60,13 +64,11 @@ public class Downloader{
 		getHTTPRequestData(false, i_URL);
 		checkRobotsFile();
 	}
-
+	
 	public Downloader(){
-
+		
 	}
 
-	
-	
 	/**
 	 * Get HTTP Request
 	 * @param i_URL
@@ -329,14 +331,22 @@ public class Downloader{
 		int read;
 		int fileSize = 0;
 		StringBuilder str = new StringBuilder();
-
+		File f = null;
+		boolean fileCreated = false;
 		try{
 			while((read = i_Reader.read(buffer)) != -1){
 				fileSize += read;
 				str.append(buffer, 0, read);
 				buffer = new char[BUFFER_SIZE];
-
-				if(read < BUFFER_SIZE){
+				
+				if (!fileCreated){
+					f = createHTMLFile();
+					fileCreated = true;
+				}
+				writeToHTMLFile(f, str);
+				m_HTMLPageData = (str.substring(0, str.length()));
+			
+				if(read < BUFFER_SIZE || read == 0){
 					m_chunkedFileSize = fileSize;
 					if (m_Robots){
 						//m_RequestedFile = str.substring(0, str.length());
@@ -344,8 +354,8 @@ public class Downloader{
 					}
 					else {
 						if(!onlyHeaders){
-							m_HTMLPageData = str.substring(0, str.length());
-							//	System.out.println(m_HTMLPageData);
+						//	m_HTMLPageData = str.substring(0, str.length());
+						//	System.out.println(m_HTMLPageData);
 						} else {
 							m_RequestedFileSize = fileSize;
 						}
@@ -354,10 +364,47 @@ public class Downloader{
 					break;
 				}
 			}
+			System.out.println("Done");
 		}
 		catch (Exception e){
 
 		}
+	}
+	
+	private void writeToHTMLFile(File f, StringBuilder str){
+		//write to file
+		Writer writer = null;
+
+		try {
+		    writer = new BufferedWriter(new OutputStreamWriter(
+		          new FileOutputStream(f), "utf-8"));
+
+		    writer.write(str.substring(0, str.length()));
+
+		} catch (IOException ex) {
+		  // report
+		} finally {
+		   try {writer.close();} catch (Exception ex) {}
+		}
+	}
+	private File createHTMLFile(){
+		Date date = new Date();
+		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
+		String fileName = "_" + dateFormat.format(date);
+
+		String path = "c:\\serverroot" + File.separator + "CrawlerResults" + File.separator + fileName + ".txt";
+		// Use relative path for Unix systems
+		File f = new File(path);
+		
+		f.getParentFile().mkdirs(); 
+		try {
+			f.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return f;
+	//DELETE
 	}
 
 	/**
