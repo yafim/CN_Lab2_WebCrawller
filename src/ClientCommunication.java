@@ -160,7 +160,7 @@ public class ClientCommunication {
 
 
 					clearRequestedData();
-			//		return;
+					return;
 					//System.out.println("clear");
 				}
 			}
