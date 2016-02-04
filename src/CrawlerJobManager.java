@@ -64,8 +64,7 @@ public class CrawlerJobManager {
 	public void addAnalayzerTask(String url, String content, CrawlerJobManager crawlerManager) {
 		server.addAnalayzerTask(url, content, domain, crawlerManager);
 	}
-	
-	
+		
 	public boolean isImageExtension(String extension) {
 		return extensionChecker.isImageExtension(extension);
 	}
@@ -89,9 +88,5 @@ public class CrawlerJobManager {
 
 	public int calcFileSize(String fileUrl) {
 		return 0;
-	}
-	
-	
-	
-	
+	}	
 }

@@ -95,7 +95,9 @@ public class AnalyzerTask implements CrawlerTask {
 	private void handleATags() {
 		Statistics stat = crawlerJobManager.getStatistics();
 		
-		ArrayList<String> aLinks = getALinks();		
+		ArrayList<String> aLinks = getALinks();	
+		System.out.println("Number of link Analyzer extracted from a given URL: " + url + " is " + aLinks.size());
+		
 		System.out.println("All links:");
 		System.out.println(aLinks);
 		for(String linkUrl : aLinks) {
@@ -105,8 +107,15 @@ public class AnalyzerTask implements CrawlerTask {
 					linkUrl = domain + linkUrl;
 				
 				crawlerJobManager.addDownloaderTask(linkUrl, crawlerJobManager);
-			} else
+			} else {
 				stat.incrementExternalLinks();
+				int indexOfSlash = linkUrl.indexOf('/');
+				if (indexOfSlash == -1) {
+					stat.addConnectedDomain(linkUrl);
+				}
+				else
+					stat.addConnectedDomain(linkUrl.substring(0, indexOfSlash));
+			}
 		}
 	}
 

@@ -137,8 +137,8 @@ public class ClientCommunication {
 							String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
 //							System.err.println(newHeader);							
 							m_OutToClient.writeBytes(newHeader);
-							
 						}
+						
 						//return;
 					} else {
 						m_OutToClient.writeBytes(head);
