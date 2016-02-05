@@ -57,6 +57,7 @@ public class HTTPRequest {
 	private String m_DefaultPage;
 
 	private boolean m_IsValidRequest = false;
+	private static boolean m_IsValidReferer = true;
 
 	// Default is 200
 	private String m_ResponseMessage = OK_MSG;
@@ -142,7 +143,7 @@ public class HTTPRequest {
 		m_HTTPRequest = i_HTTPRequest;
 		m_In = i_In;
 		// print HTTP request to console
-	//	System.out.println(m_HTTPRequest);
+		System.out.println(m_HTTPRequest);
 
 
 		try{
@@ -203,7 +204,6 @@ public class HTTPRequest {
 	private void splitHttpRequest(String i_HTTPRequest) throws BadRequestException{
 		m_SplitHTTPRequest = i_HTTPRequest.split(System.lineSeparator(), 2);
 		verifyGivenPath(m_SplitHTTPRequest[0]);
-		
 	}
 
 	/**
@@ -324,7 +324,12 @@ public class HTTPRequest {
 
 		for (String s : i_String.split(System.lineSeparator())) {
 			isNull = s == System.lineSeparator() || s.equals("") || s.equals(" ") || s.equals(null);
-
+			
+			if (s.contains("Referer")){
+//				System.err.println(s.replaceAll("\\s", "").split(":", 2)[1].equals("http://localhost:8080/"));
+				m_IsValidReferer = s.replaceAll("\\s", "").split(":", 2)[1].equals("http://localhost:8080/");
+			}
+			
 			/** Check for body */
 			if (requestFlag){
 				i_Dictionary.put("RequestBody", s);
@@ -438,11 +443,12 @@ public class HTTPRequest {
 	 */
 	private void buildResponseMessage(boolean i_PrintFileContent, boolean i_IncludeConetnt) throws Exception{
 		try{
-			if (m_HTTPMethod != HttpMethod.POST){
+			if (m_HTTPMethod != HttpMethod.POST || !m_IsValidReferer){
 				if (m_RequestedFileFullPath.getName().equals("execResult.html")){
 					throw new Exception("403");
 				}
 			}
+			
 			m_IsForbiddenErr = false;
 			handleFileRequest();
 			createResponseHeader();
@@ -697,6 +703,7 @@ boolean m_Error = false; // TODO
 	 */
 	public void clear(){
 		/** HTTP request variables */
+		m_IsValidReferer = true;
 		m_IsValidRequest = false;
 		m_HTTPRequest = "";
 		m_SplitHTTPRequest = null;	

@@ -97,7 +97,6 @@ public class ClientCommunication {
 							String key = entry.getKey();
 							String value = entry.getValue();
 							sum += key.length()+value.length();
-							
 						}
 						params = Integer.toString(sum);
 //						System.out.println(params);
@@ -164,7 +163,6 @@ public class ClientCommunication {
 							
 							int newLength = responseMessage.length();
 							String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
-							System.err.println(newHeader);
 							m_OutToClient.writeBytes(newHeader);
 							
 						}
