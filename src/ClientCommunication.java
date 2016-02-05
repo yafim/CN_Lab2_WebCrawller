@@ -147,6 +147,7 @@ public class ClientCommunication {
 							m_OutToClient.writeBytes(newHeader);
 						}
 						System.out.println(m_Downloader.getHTMLPageData());
+						//Yafim check this
 						return;
 						
 					} else {
