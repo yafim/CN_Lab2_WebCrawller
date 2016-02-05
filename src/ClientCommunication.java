@@ -146,7 +146,7 @@ public class ClientCommunication {
 //							System.err.println(newHeader);							
 							m_OutToClient.writeBytes(newHeader);
 						}
-						System.out.println(m_Downloader.getHTMLPageData());
+					//	System.out.println(m_Downloader.getHTMLPageData());
 						return;
 						
 					} else {
@@ -155,12 +155,11 @@ public class ClientCommunication {
 							m_OutToClient.write(html);
 						}
 					}
-
 					//END LAB2
 
 
 					clearRequestedData();
-					return;
+					//return;
 					//System.out.println("clear");
 				}
 			}
