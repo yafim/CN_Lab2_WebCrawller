@@ -143,7 +143,7 @@ public class HTTPRequest {
 		m_HTTPRequest = i_HTTPRequest;
 		m_In = i_In;
 		// print HTTP request to console
-		System.out.println(m_HTTPRequest);
+	//	System.out.println(m_HTTPRequest);
 
 
 		try{

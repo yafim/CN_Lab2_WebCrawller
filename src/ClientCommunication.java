@@ -87,7 +87,7 @@ public class ClientCommunication {
 					byte[] html = (byte[]) hm.get("Content");
 
 
-					System.out.println(head);
+				//	System.out.println(head);
 
 
 					if (m_HttpRequest.getHTMLParams() != null){
@@ -134,11 +134,13 @@ public class ClientCommunication {
 					if(!m_HttpRequest.getHTMLParams().isEmpty()){
 						String responseMessage = "";
 						String filePath = "";
+						int size = -1;
 						boolean success = false;
 						try{
 							m_Downloader = new Downloader();
 							m_Downloader.initParams(m_HttpRequest.getHTMLParams());
-							//m_Downloader.getFileSizeFromURL("http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_2mb.mp4");
+						//	size = m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4");
+							
 							responseMessage = "<h1>Crawler started successfully</h1><br>";
 							
 							success = true;
@@ -149,6 +151,7 @@ public class ClientCommunication {
 						} 
 						finally {
 							if (success){
+							//	System.err.println("Size : " + size);
 								createResultFile(m_Downloader.getRequestedDomainName());
 							}
 							

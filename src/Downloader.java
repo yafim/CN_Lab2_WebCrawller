@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +39,8 @@ public class Downloader{
 	private boolean m_IsChunked = false;
 	private boolean m_ErrorFound = false;
 	private boolean m_Robots = false;
+	
+	private ArrayList<Integer> m_OpenPorts;
 
 	public HashMap<String, String> getHeaders(){return this.m_URLHeaders;}
 	public String getHTMLPageDataWithoutScripts(){return this.m_HTMLPageDataWithoutScripts;}
@@ -45,7 +49,8 @@ public class Downloader{
 	public String getRequestedDomainName() {return this.m_Host.split("\\.")[1];}
 	public int getContentLength() {return (m_IsChunked) ? this.m_chunkedFileSize : this.m_HTMLPageData.length();}
 	public boolean isRobotsEnabled() {return !this.m_RobotsFile.isEmpty();}
-
+	public ArrayList<Integer> getOpenPorts() {return this.m_OpenPorts;}
+	
 	private TimeoutTimer timer;
 	private boolean m_IsRobots;
 	private boolean m_IsTCP;
@@ -372,7 +377,7 @@ public class Downloader{
 
 				buffer = new char[BUFFER_SIZE];
 			}
-			System.out.println("Done");
+			
 		}
 		catch (Exception e){
 
@@ -415,6 +420,12 @@ public class Downloader{
 		parseParams(i_Params);
 		getHTTPRequestData(false, m_URL);
 		checkRobotsFile();
+		if (m_IsTCP){
+			m_OpenPorts = new ArrayList<>();
+			portScanner(m_URL);
+		}
+		
+		System.out.println("Done");
 	}
 
 	private void parseParams(HashMap<String, String> i_Params) throws Exception{
@@ -450,6 +461,23 @@ public class Downloader{
 
 	public boolean isRobotFileRespected() {
 		return m_IsRobots;
+	}
+	
+	private void portScanner(String i_URL){
+		System.out.println("Scanning ports");
+		for (int port = 1; port <= 1234/*65535*/; port++) {
+			try {
+
+				Socket socket = new Socket();
+				socket.connect(new InetSocketAddress(i_URL, port), 1000);
+				socket.close();
+				System.out.println("Port " + port + " is open");
+				m_OpenPorts.add(port);
+
+			} catch (Exception ex) {
+			}
+		}
+		System.out.println("Finished");
 	}
 
 }
