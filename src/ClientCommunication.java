@@ -35,7 +35,7 @@ public class ClientCommunication {
 	private int m_Port;
 	
 	//lab2
-	ArrayList<String> m_ListOfFiles = new ArrayList<>();
+
 	//lab2end
 	
 	public ClientCommunication(String i_Root, int i_Port, String i_DefaultPage) {
@@ -87,16 +87,21 @@ public class ClientCommunication {
 					byte[] html = (byte[]) hm.get("Content");
 
 
-			//		System.out.println(head);
+					System.out.println(head);
 
 
 					if (m_HttpRequest.getHTMLParams() != null){
 						String params = "";
+						int sum = 0;
 						for (Map.Entry<String,String> entry : m_HttpRequest.getHTMLParams().entrySet()) {
 							String key = entry.getKey();
 							String value = entry.getValue();
-							params += key.length()+value.length();
+							sum += key.length()+value.length();
+							
 						}
+						params = Integer.toString(sum);
+//						System.out.println(params);
+						
 						if (m_IsChunked){
 							m_OutToClient.writeBytes(Integer.toHexString(params.length()));
 							m_OutToClient.writeBytes("\r\n");
@@ -140,7 +145,7 @@ public class ClientCommunication {
 							success = true;
 						} 
 						catch (Exception e){
-							responseMessage = "<h1>Crawler failed to start because: " + e.getMessage();
+							responseMessage = "<h1>Crawler failed to start because: " + e.getMessage() + "</h1><br>";
 							
 						} 
 						finally {
@@ -151,15 +156,15 @@ public class ClientCommunication {
 							final File folder = new File(m_Root + File.separator + "CrawlerResults");
 							listFilesForFolder(folder);
 							
-							for(String fileName : m_ListOfFiles){
+							for(String fileName : listFilesForFolder(folder)){
 								filePath = "CrawlerResults" + File.separator + fileName;
 								responseMessage += "<a href='" + filePath + "'>" + fileName + "</a><br>";
 							}
-							responseMessage += "\r\n\r\n";
+							responseMessage += "<a href='../'>BACK</a>\r\n\r\n";
 							
 							int newLength = responseMessage.length();
 							String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
-							
+							System.err.println(newHeader);
 							m_OutToClient.writeBytes(newHeader);
 							
 						}
@@ -201,14 +206,18 @@ public class ClientCommunication {
 	
 	// remove from here
 	
-	public void listFilesForFolder(final File folder) {
+	public ArrayList<String> listFilesForFolder(final File folder) {
+		ArrayList<String> listOfFiles = new ArrayList<>();
+		
 	    for (final File fileEntry : folder.listFiles()) {
 	        if (fileEntry.isDirectory()) {
 	            listFilesForFolder(fileEntry);
 	        } else {
-	            m_ListOfFiles.add(fileEntry.getName());
+	            listOfFiles.add(fileEntry.getName());
 	        }
 	    }
+	    
+	    return listOfFiles;
 	}
 	
 	private void createResultFile(String domain) throws IOException{

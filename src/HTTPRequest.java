@@ -25,6 +25,8 @@ public class HTTPRequest {
 	private final String ERR_BAD_REQUEST = "400 Bad Request";
 	private final String ERR_INTERNAL_SRV_ERR = "500 Internal Server Error";
 	private final String OK_MSG = "200 OK";
+	private final String FORBIDDEN_ERR_MSG = "403 Forbidden";
+	private final String m_ForbiddenMessageHTML = FORBIDDEN_ERR_MSG + "<br><a href='/'>BACK</a>";
 
 	/** HTTP request variables */
 	private String m_HTTPRequest = null;
@@ -43,6 +45,7 @@ public class HTTPRequest {
 	private HashMap<String, Object> m_HTTPResponse = null;
 	private String m_FileExtension;
 	private boolean m_IsImage = false;
+	private boolean m_IsForbiddenErr = false;
 
 	/** Read file variables */	
 	private static FileInputStream m_FileInputStream = null;
@@ -185,7 +188,7 @@ public class HTTPRequest {
 				htmlParams += key + " : <input type=\"text\" value=\"" + 
 				value + "\"> <br>";
 				
-//				System.err.println("Key: " + key + "Value: " + value); //debug
+		//		System.out.println("Key: " + key + "Value: " + value); //debug
 			}
 				m_RequestedVariablesLength = htmlParams.length();
 //				m_HTMLParams = htmlParams;
@@ -435,6 +438,12 @@ public class HTTPRequest {
 	 */
 	private void buildResponseMessage(boolean i_PrintFileContent, boolean i_IncludeConetnt) throws Exception{
 		try{
+			if (m_HTTPMethod != HttpMethod.POST){
+				if (m_RequestedFileFullPath.getName().equals("execResult.html")){
+					throw new Exception("403");
+				}
+			}
+			m_IsForbiddenErr = false;
 			handleFileRequest();
 			createResponseHeader();
 
@@ -464,6 +473,18 @@ public class HTTPRequest {
 		} catch (FileNotImplementedException fnse){
 			m_ResponseMessage = ERR_NOT_IMPEMENTED;
 			createResponseHeader();
+		} catch (Exception e){
+			if (e.getMessage().equals("403")){
+				m_IsForbiddenErr = true;
+				m_ResponseMessage = FORBIDDEN_ERR_MSG;
+				
+				m_RequestedFileContent = m_ForbiddenMessageHTML.getBytes();
+				createResponseHeader();
+				
+			}
+			else {
+				System.err.println(e.getMessage());
+			}
 		}
 	}
 
@@ -547,15 +568,21 @@ boolean m_Error = false; // TODO
 	private void createResponseHeader(){
 		m_HTTPResponse = new HashMap<String, Object>();
 
-		String contentType = (m_ResponseMessage != ERR_FILE_NOT_FOUND) ?getContentType()
+		String contentType = (m_ResponseMessage != ERR_FILE_NOT_FOUND) ? getContentType()
 				: "text/html";
-
+		if (m_IsForbiddenErr){
+			contentType = "text/html";
+		}
+		
 		if (!m_IsChunked){
 
 			String contentLength = getContentLength();
 
 			buildResponseHeader(contentType, contentLength);
 			if (m_Error){
+				buildResponseContent();
+			}
+			else if (m_IsForbiddenErr){
 				buildResponseContent();
 			}
 
@@ -718,6 +745,10 @@ boolean m_Error = false; // TODO
 	private String getContentLength(){
 		int contentLength = (m_RequestedFileContent != null) ? m_RequestedFileContent.length : 0;
 		contentLength += m_RequestedVariablesLength;
+		
+		if (m_IsForbiddenErr){
+			contentLength = m_ForbiddenMessageHTML.length();
+		}
 		return contentLength + "";
 	}
 

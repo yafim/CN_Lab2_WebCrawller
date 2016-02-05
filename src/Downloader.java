@@ -147,7 +147,7 @@ public class Downloader{
 								if (!m_IsChunked){
 									//TODO: 
 									//	setHTMLPageData(i_Reader);
-									setHTMLDataTest(i_Reader);
+									setHTMLPageData(i_Reader);
 								}
 								else {
 									readFileByChunks(i_Reader, false);
@@ -275,53 +275,6 @@ public class Downloader{
 	 * @throws Exception 
 	 */
 	private void setHTMLPageData(BufferedReader i_Reader) throws Exception{
-		String line = "";
-		boolean isHTMLBody = false;
-		int c;
-		while ((line = i_Reader.readLine()) != null) {
-			System.out.println("start readLine");
-			try{
-				line = i_Reader.readLine();
-				//	System.out.println((char) c);
-			}
-			catch (Exception e){
-				System.out.println("exception readLine");
-			}
-			System.out.println("end readLine");
-
-			if (timer.timeOut){
-				throw new Exception("Timeout...");
-			}
-
-			//					System.out.println(line);
-			if (m_Robots){
-				if (line.isEmpty()){
-					break;
-				}
-				m_RobotsFile += line;
-			}
-			else {
-				m_HTMLPageData += line;
-			}
-
-			if (line.contains("body")){
-				isHTMLBody = true;
-			}
-			if (isHTMLBody){
-				m_HTMLPageDataWithoutScripts += line;	
-				//System.out.println(line);
-			}
-
-			if (line.contains("</body") || line.contains("</html")){
-				isHTMLBody = false;
-				break;
-			}
-		}
-		System.out.println("DoneReading");
-	}
-
-	// TODO: DELETE
-	private void setHTMLDataTest(BufferedReader i_Reader) throws Exception{
 		int c = 0;
 		String line = "";
 		String sHTMLTag = "</html>";
@@ -330,35 +283,21 @@ public class Downloader{
 		m_IsChunked = false;
 
 		while ((c = i_Reader.read()) != -1) {
-			/*			if (timer.timeOut){
+			if (timer.timeOut){
 				throw new Exception("Timeout...");
-			}*/
+			}
 			line += (char) c;
 
-			//			System.out.print((char) c);
-			/*			if (m_Robots){
-				if (line.isEmpty()){
-					System.out.println("here");
-					break;
-				}
-				m_RobotsFile += line;
-			}
-			else {
-				m_HTMLPageData += line;
-			}*/
 			if (line.length() >= sHTMLTag.length()){
 				stringToCheck = line.substring(line.length() - sHTMLTag.length());
 				if (m_Robots){
 					if (line.length() >= m_ContentLength){
 						m_RobotsFile = line;
-//						System.out.println(m_RobotsFile);
-//						System.out.println("RobotsFile is ready");
 						break;
 					}
 				}
 				else {
 					if (stringToCheck.contains("</html>")){
-//						System.out.println("HTTPFile is ready");
 						m_HTMLPageData = line;
 						break;
 					}
@@ -366,7 +305,6 @@ public class Downloader{
 			}
 		}
 	}
-	//DELETE UNTIL HERE
 
 	/**
 	 * Get file size from URL.
