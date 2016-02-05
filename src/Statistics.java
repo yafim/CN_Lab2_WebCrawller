@@ -1,7 +1,18 @@
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 
 public class Statistics {
+	private String m_Root = "C:\\serverroot";
+	
 	private boolean isRespectedRobot;
 	private boolean isRequestedOpenPorts;
 	private int numberOfImages = 0;
@@ -102,4 +113,31 @@ public class Statistics {
 			System.out.println("Robots.txt file is not respected");
 		}
 	}
+	
+	private void createResultFile(String domain) throws IOException{
+		Date date = new Date();
+		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
+		String fileName = domain + "_" + dateFormat.format(date);
+
+		String path = m_Root + File.separator + "CrawlerResults" + File.separator + fileName + ".txt";
+		// Use relative path for Unix systems
+		File f = new File(path);
+		
+		//write to file
+		Writer writer = null;
+
+		try {
+		    writer = new BufferedWriter(new OutputStreamWriter(
+		          new FileOutputStream(f), "utf-8"));
+		 //   writer.write(getCrawlerStatistics());
+		} catch (IOException ex) {
+		  // report
+		} finally {
+		   try {writer.close();} catch (Exception ex) {/*ignore*/}
+		}
+		
+		f.getParentFile().mkdirs(); 
+		f.createNewFile();
+	}
+	
 }

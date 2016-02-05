@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class Downloader{
 
-	private final int TIMEOUT = 22;
+	private final int TIMEOUT = 10;
 	private final int PORT = 80;
 	private final int MAX_REDIRECTIONS = 5;
 	private final int BUFFER_SIZE = 1024;
@@ -32,6 +32,7 @@ public class Downloader{
 	private int m_chunkedFileSize;
 	private int m_Redirections = 0;
 	private int m_RequestedFileSize = 0;
+	private int m_ContentLength = 0;
 
 	private boolean m_IsChunked = false;
 	private boolean m_ErrorFound = false;
@@ -59,7 +60,7 @@ public class Downloader{
 		getHTTPRequestData(false, i_URL);
 		checkRobotsFile();
 	}
-	
+
 	public Downloader(){}
 
 	/**
@@ -144,7 +145,9 @@ public class Downloader{
 						else {
 							if(!onlyHeaders){
 								if (!m_IsChunked){
-									setHTMLPageData(i_Reader);
+									//TODO: 
+									//	setHTMLPageData(i_Reader);
+									setHTMLDataTest(i_Reader);
 								}
 								else {
 									readFileByChunks(i_Reader, false);
@@ -176,9 +179,12 @@ public class Downloader{
 	 */
 	private void setHeader(String i_Header){
 		String[] splittedString;
-		//	System.out.println(i_Header);
+	//	System.out.println(i_Header);
 		try{
 			splittedString = i_Header.replaceAll("\\s","").split(":", 2);
+			if (splittedString[0].toLowerCase().equals("content-length")){
+				m_ContentLength = Integer.parseInt(splittedString[1]);
+			}
 			m_URLHeaders.put(splittedString[0], splittedString[1]);
 			if (splittedString[0].equals("Transfer-Encoding") && splittedString[1].equals("chunked")){
 				m_IsChunked = true;
@@ -233,12 +239,12 @@ public class Downloader{
 	 */
 	private String getFixedURL(String i_URL) throws Exception{		
 		String toReturn = "";
-		
+
 		String url;
-		
+
 		url = (i_URL.contains("%3A%2F%2F")) ? i_URL.replace("%3A%2F%2F", "://") : i_URL;
 		url = url.replace("%2F", "/");
-		
+
 		if(url.contains("https://")){
 			throw new Exception("https does not supported");
 		}
@@ -266,15 +272,28 @@ public class Downloader{
 	/**
 	 * Get HTML content from HTTP response.
 	 * @param i_Reader
-	 * @throws IOException
+	 * @throws Exception 
 	 */
-	private void setHTMLPageData(BufferedReader i_Reader) throws IOException{
+	private void setHTMLPageData(BufferedReader i_Reader) throws Exception{
 		String line = "";
 		boolean isHTMLBody = false;
-
+		int c;
 		while ((line = i_Reader.readLine()) != null) {
+			System.out.println("start readLine");
+			try{
+				line = i_Reader.readLine();
+				//	System.out.println((char) c);
+			}
+			catch (Exception e){
+				System.out.println("exception readLine");
+			}
+			System.out.println("end readLine");
 
-			//		System.out.println(line);
+			if (timer.timeOut){
+				throw new Exception("Timeout...");
+			}
+
+			//					System.out.println(line);
 			if (m_Robots){
 				if (line.isEmpty()){
 					break;
@@ -293,13 +312,61 @@ public class Downloader{
 				//System.out.println(line);
 			}
 
-			if (line.contains("</body>") || line.contains("</html>")){
+			if (line.contains("</body") || line.contains("</html")){
 				isHTMLBody = false;
 				break;
 			}
 		}
-
+		System.out.println("DoneReading");
 	}
+
+	// TODO: DELETE
+	private void setHTMLDataTest(BufferedReader i_Reader) throws Exception{
+		int c = 0;
+		String line = "";
+		String sHTMLTag = "</html>";
+		String stringToCheck = "";
+		//int contentLength = Integer.parseInt(m_URLHeaders.get("content-length"));
+		m_IsChunked = false;
+
+		while ((c = i_Reader.read()) != -1) {
+			/*			if (timer.timeOut){
+				throw new Exception("Timeout...");
+			}*/
+			line += (char) c;
+
+			//			System.out.print((char) c);
+			/*			if (m_Robots){
+				if (line.isEmpty()){
+					System.out.println("here");
+					break;
+				}
+				m_RobotsFile += line;
+			}
+			else {
+				m_HTMLPageData += line;
+			}*/
+			if (line.length() >= sHTMLTag.length()){
+				stringToCheck = line.substring(line.length() - sHTMLTag.length());
+				if (m_Robots){
+					if (line.length() >= m_ContentLength){
+						m_RobotsFile = line;
+//						System.out.println(m_RobotsFile);
+//						System.out.println("RobotsFile is ready");
+						break;
+					}
+				}
+				else {
+					if (stringToCheck.contains("</html>")){
+//						System.out.println("HTTPFile is ready");
+						m_HTMLPageData = line;
+						break;
+					}
+				}
+			}
+		}
+	}
+	//DELETE UNTIL HERE
 
 	/**
 	 * Get file size from URL.
@@ -331,7 +398,7 @@ public class Downloader{
 		int fileSize = 0;
 		StringBuilder str = new StringBuilder();
 		boolean isEOF;
-		
+
 		try{
 			while((read = i_Reader.read(buffer)) != 0){
 				fileSize += read;
@@ -343,19 +410,19 @@ public class Downloader{
 				else {
 					m_RobotsFile = str.substring(0, str.length());
 				}
-				
+
 				isEOF = (m_Robots) ? read < BUFFER_SIZE || read == 0 : m_HTMLPageData.contains("</html");
-				
+
 				if (isEOF){
 					m_chunkedFileSize = fileSize;
 					if (m_Robots){
 						//m_RequestedFile = str.substring(0, str.length());
-					//	m_RobotsFile = str.substring(0, str.length());
-						
+						//	m_RobotsFile = str.substring(0, str.length());
+
 					}
 					else {
 						if(!onlyHeaders){
-//							m_HTMLPageData = str.substring(0, str.length());
+							//							m_HTMLPageData = str.substring(0, str.length());
 							//System.out.println(m_HTMLPageData);
 						} else {
 							m_RequestedFileSize = fileSize;
@@ -364,7 +431,7 @@ public class Downloader{
 					i_Reader.close();
 					break;
 				}
-				
+
 				buffer = new char[BUFFER_SIZE];
 			}
 			System.out.println("Done");
@@ -434,17 +501,17 @@ public class Downloader{
 			}
 		}
 	}
-	
+
 	public String getRequestedUrl() {
 		return m_URL;
 	}
-	
+
 	public boolean isTCPOpenPortsRequested() {
 		return m_IsTCP;
 	}
-	
+
 	public boolean isRobotFileRespected() {
 		return m_IsRobots;
 	}
-	
+
 }

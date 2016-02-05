@@ -13,6 +13,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +33,10 @@ public class ClientCommunication {
 	private String m_DefaultPage;
 	private ServerSocket m_ServerSocket;
 	private int m_Port;
+	
+	//lab2
+	ArrayList<String> m_ListOfFiles = new ArrayList<>();
+	//lab2end
 	
 	public ClientCommunication(String i_Root, int i_Port, String i_DefaultPage) {
 		m_Root = i_Root;
@@ -121,33 +126,45 @@ public class ClientCommunication {
 						m_OutToClient.writeBytes("\r\n");
 					}
 					
-
-/*					m_OutToClient.writeBytes(head);
-					if (html != null){
-						m_OutToClient.write(html);
-					}*/
-					
 					//LAB 2
 					if(!m_HttpRequest.getHTMLParams().isEmpty()){
 						String responseMessage = "";
+						String filePath = "";
+						boolean success = false;
 						try{
 							m_Downloader = new Downloader();
 							m_Downloader.initParams(m_HttpRequest.getHTMLParams());
 							//m_Downloader.getFileSizeFromURL("http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_2mb.mp4");
-							responseMessage = "<h1>Crawler started successfully</h1>\r\n\r\n";
+							responseMessage = "<h1>Crawler started successfully</h1><br>";
+							
+							success = true;
 						} 
 						catch (Exception e){
-							responseMessage = "<h1>Crawler failed to start because: " + e.getMessage() + "\r\n\r\n";
+							responseMessage = "<h1>Crawler failed to start because: " + e.getMessage();
 							
 						} 
 						finally {
+							if (success){
+								createResultFile(m_Downloader.getRequestedDomainName());
+							}
+							
+							final File folder = new File(m_Root + File.separator + "CrawlerResults");
+							listFilesForFolder(folder);
+							
+							for(String fileName : m_ListOfFiles){
+								filePath = "CrawlerResults" + File.separator + fileName;
+								responseMessage += "<a href='" + filePath + "'>" + fileName + "</a><br>";
+							}
+							responseMessage += "\r\n\r\n";
+							
 							int newLength = responseMessage.length();
 							String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
-//							System.err.println(newHeader);							
+							
 							m_OutToClient.writeBytes(newHeader);
+							
 						}
-					//	System.out.println(m_Downloader.getHTMLPageData());
-						return;
+						
+					//	return;
 						
 					} else {
 						m_OutToClient.writeBytes(head);
@@ -156,7 +173,6 @@ public class ClientCommunication {
 						}
 					}
 					//END LAB2
-
 
 					clearRequestedData();
 					//return;
@@ -183,14 +199,27 @@ public class ClientCommunication {
 		}
 	}
 	
+	// remove from here
+	
+	public void listFilesForFolder(final File folder) {
+	    for (final File fileEntry : folder.listFiles()) {
+	        if (fileEntry.isDirectory()) {
+	            listFilesForFolder(fileEntry);
+	        } else {
+	            m_ListOfFiles.add(fileEntry.getName());
+	        }
+	    }
+	}
+	
 	private void createResultFile(String domain) throws IOException{
 		Date date = new Date();
 		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
 		String fileName = domain + "_" + dateFormat.format(date);
 
-		String path = m_Root + File.separator + "CrawlerResults" + File.separator + fileName + ".txt";
+		String path = m_Root + File.separator + "CrawlerResults" + File.separator + fileName + ".html";
 		// Use relative path for Unix systems
 		File f = new File(path);
+//		System.out.println(fileName + "created");
 		
 		//write to file
 		Writer writer = null;
@@ -198,7 +227,7 @@ public class ClientCommunication {
 		try {
 		    writer = new BufferedWriter(new OutputStreamWriter(
 		          new FileOutputStream(f), "utf-8"));
-		 //   writer.write(getCrawlerStatistics());
+		    writer.write(getCrawlerStatistics());
 		} catch (IOException ex) {
 		  // report
 		} finally {
@@ -209,6 +238,59 @@ public class ClientCommunication {
 		f.createNewFile();
 	}
 	
+	private String getCrawlerStatistics(){
+		StringBuilder str = new StringBuilder();
+		str.append("<html><head></head><body>");
+		//Did the crawler respect robots.txt or not.
+		str.append("Robots respect: <br>" );
+
+		//Number of images(from config.ini)
+		str.append("Number of images: <br>");
+
+		//Total size (in bytes) of images
+		str.append("Total size (in bytes) of images: <br>");
+
+//		Number of videos(from config.ini)
+		str.append("Number of videos: <br>");
+
+//		Total size (in bytes) of videos
+		str.append("Total size (in bytes) of videos: <br>");
+
+//		Number of document (from config.ini)
+		str.append("Number of documents: <br>");
+
+//		Total size (in bytes) of documents
+		str.append("Total size (in bytes) of documents: <br>");
+
+//		Number of pages(all detected files excluding images, videosand documents).
+		str.append("Number of pages: <br>");
+
+//		Total size (in bytes) of pages
+		str.append("Total size (in bytes) of pages: <br>");
+
+//		Number of internal links(pointing into the domain)
+		str.append("Number of internal links: <br>");
+
+//		Number of external links (pointing outside the domain)
+		str.append("Number of external links: <br>");
+
+//		Number of domains the crawled domain is connected to
+		str.append("Number of domains the crawled domain is connected to: <br>");
+
+//		The domains the crawled domain is connected to
+		str.append("The domains the crawled domain is connected to: <br>");
+
+//		If requested, the opened ports.
+		str.append("If requested, the opened ports: <br>");
+
+//		Average RTT in milliseconds (Time passed from sending the HTTP request until received the HTTP response, excludingreading the response).
+		str.append("Average RTT in milliseconds: <br>");
+		
+		str.append("<a href='../'>BACK</a><br></body></html>");
+		
+		return str.substring(0, str.length());
+	}
+	// remove until here
 
 	private void waitToClientSocket() {
 		//At the beginning no client has connected so the client
