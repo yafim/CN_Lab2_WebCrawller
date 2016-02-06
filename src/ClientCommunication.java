@@ -146,17 +146,14 @@ public class ClientCommunication {
 //							System.err.println(newHeader);							
 							m_OutToClient.writeBytes(newHeader);
 						}
-						System.out.println(m_Downloader.getHTMLPageData());
-						//Yafim check this
-						return;
-						
+//						System.out.println(m_Downloader.getHTMLPageData());
+						break;											
 					} else {
 						m_OutToClient.writeBytes(head);
 						if (html != null){
 							m_OutToClient.write(html);
 						}
 					}
-
 					//END LAB2
 
 
@@ -266,7 +263,7 @@ public class ClientCommunication {
 	}
 	
 	public String[] getRobotsFileContent() {
-		return m_Downloader.getRobotsFile().split("\r\n");
+		return m_Downloader.getRobotsFile().split("\n");
 	}
 
 }

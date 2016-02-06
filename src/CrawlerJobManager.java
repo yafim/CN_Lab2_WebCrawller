@@ -21,13 +21,12 @@ public class CrawlerJobManager {
 		this.extensionChecker = extensionChecker;
 		
 		this.scrawledUrls = new ArrayList<String>();
+		this.scrawledUrls.add(domain);
 	}
 
 	public void start(String[] robotsFileContent) {
 		statistics = new Statistics(isRespectedRobot, isRequestedOpenPorts);
-		if (isRespectedRobot) {
-			parseRobots(robotsFileContent);		
-		}
+		parseRobots(robotsFileContent);		
 		server.startCrawlerFlow(this);
 	}
 
@@ -48,16 +47,21 @@ public class CrawlerJobManager {
 		return domain.substring(0, indexOfSlash);
 	}
 	
+	public boolean isInternalLinkExist(String url) {
+		return scrawledUrls.indexOf(url) != -1;
+	}
+	
 	public void addDownloaderTask(String url, CrawlerJobManager crawlerManager) {
 		if (url.startsWith("https://"))
 			return;
 		
-		if (scrawledUrls.indexOf(url) != -1)
+		if (isInternalLinkExist(url))
 			return;
 		
 		if (isRespectedRobot && robotsParser.isAllowedPage(url) == false)
 			return;			
 		
+		scrawledUrls.add(url);
 		server.addDownloaderTask(url, crawlerManager);
 	}
 
@@ -79,14 +83,20 @@ public class CrawlerJobManager {
 
 	//!!!!!NEED TO IMPLEMENT STILL!!!!!!!!
 	public boolean isAllowedPage(String url) {
+		if (isRespectedRobot)
+			return robotsParser.isAllowedPage(url);
 		return true;
 	}
 	
 	public Statistics getStatistics() {
 		return statistics;
 	}
-
+	
 	public int calcFileSize(String fileUrl) {
 		return 0;
+	}
+
+	public void printStatistics() {
+		statistics.print();
 	}	
 }

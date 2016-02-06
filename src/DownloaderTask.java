@@ -1,8 +1,9 @@
-public class DownloaderTask implements CrawlerTask{
+public class DownloaderTask extends CrawlerTask{
 	private String url;
 	private CrawlerJobManager crawlerJobManager;
 	
 	public DownloaderTask(String url, CrawlerJobManager crawlerJobManager) {
+		super("Downloader");
 		this.url = url;
 		this.crawlerJobManager = crawlerJobManager;
 	}
@@ -11,8 +12,7 @@ public class DownloaderTask implements CrawlerTask{
 		return crawlerJobManager;
 	}
 	
-	@Override
-	public void doTask() {
+	public void doTask() {		
 		System.out.println("Downloader starts downloading URL " + url);
 		
 		Downloader downloader;
@@ -23,8 +23,8 @@ public class DownloaderTask implements CrawlerTask{
 			// add analyzer task
 			crawlerJobManager.addAnalayzerTask(url, content, crawlerJobManager);
 		} catch (Exception e) {
-			System.out.println("Error with downloading " + url + ". Print stack trace:");
-			e.printStackTrace();
+			System.out.println("Error with downloading " + url + ". Error message: " + e.getMessage());
+			return;
 		}
 		
 		System.out.println("Downloader ends downloading the URL " + url);

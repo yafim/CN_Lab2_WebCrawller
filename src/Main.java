@@ -42,7 +42,8 @@ public class Main {
 			printParams();
 			
 			server = new MultiThreadedClass(m_Port, m_Root, m_DefaultPage);
-			server.startTheServer(m_MaxThreads);
+			server.startTheServer(m_MaxThreads, m_MaxDownloaders, m_MaxAnalyzers);
+			
 			System.out.println("Listening on port " + m_Port);
 			ClientCommunication clientCommunication = new ClientCommunication(m_Root, m_Port, m_DefaultPage);
 			clientCommunication.doClientRequestFlow();
@@ -51,7 +52,7 @@ public class Main {
 			boolean isRespectedRobotFile = clientCommunication.isRobotFileRespected();
 			boolean isRequestedTcpPortsScan = clientCommunication.isTCPOpenPortsRequested();
 			String[] robotsFileContent = clientCommunication.getRobotsFileContent();
-			
+
 			ExtensionsChecker extensionChecker = new ExtensionsChecker(m_ImageExtensions, m_VideoExtensions, m_DocumentExtensions);
 			// change it
 			CrawlerJobManager crawlerManager = new CrawlerJobManager(server, requestedUrl, isRespectedRobotFile, isRequestedTcpPortsScan, extensionChecker);

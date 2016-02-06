@@ -1,16 +1,10 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.net.Socket;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,6 +41,7 @@ public class Downloader{
 	public String getHTMLPageDataWithoutScripts(){return this.m_HTMLPageDataWithoutScripts;}
 	public String getHTMLPageData() {return this.m_HTMLPageData;}
 	public String getRobotsFile() {return this.m_RobotsFile;}
+	public String getRequestedDomainName() {return this.m_Host.split("\\.")[1];}
 	public int getContentLength() {return (m_IsChunked) ? this.m_chunkedFileSize : this.m_HTMLPageData.length();}
 	public boolean isRobotsEnabled() {return !this.m_RobotsFile.isEmpty();}
 
@@ -62,12 +57,9 @@ public class Downloader{
 	public Downloader(String i_URL) throws Exception{
 
 		getHTTPRequestData(false, i_URL);
-		checkRobotsFile();
 	}
 	
-	public Downloader(){
-		
-	}
+	public Downloader(){}
 
 	/**
 	 * Get HTTP Request
@@ -106,6 +98,7 @@ public class Downloader{
 	 * @throws Exception 
 	 */
 	private void checkRobotsFile() throws Exception{
+		System.out.println("checkRobotsFile();");
 		try {
 			m_Robots = true;
 			getHTTPRequestData(false, m_URL + "/robots.txt");
@@ -240,10 +233,16 @@ public class Downloader{
 	 */
 	private String getFixedURL(String i_URL) throws Exception{		
 		String toReturn = "";
-		if(i_URL.contains("https://")){
+		
+		String url;
+		
+		url = (i_URL.contains("%3A%2F%2F")) ? i_URL.replace("%3A%2F%2F", "://") : i_URL;
+		url = url.replace("%2F", "/");
+		
+		if(url.contains("https://")){
 			throw new Exception("https does not supported");
 		}
-		toReturn = (i_URL.contains("http://")) ? i_URL.replace("http://", "") : i_URL;
+		toReturn = (url.contains("http://")) ? url.replace("http://", "") : url;
 
 		if (m_Host == ""){
 			m_Host = toReturn.split("/", 2)[0];
@@ -331,36 +330,33 @@ public class Downloader{
 		int read;
 		int fileSize = 0;
 		StringBuilder str = new StringBuilder();
-		File f = null;
-		boolean fileCreated = false;
+		boolean isEOF;
+		
 		try{
-			while((read = i_Reader.read(buffer)) != -1){
+			while((read = i_Reader.read(buffer)) != 0){
 				fileSize += read;
 				str.append(buffer, 0, read);
-				buffer = new char[BUFFER_SIZE];
-				
-				if (!fileCreated){
-					f = createHTMLFile();
-					fileCreated = true;
-				}
-				writeToHTMLFile(f, str);
+
 				if (!m_Robots){
 					m_HTMLPageData = (str.substring(0, str.length()));
 				}
 				else {
 					m_RobotsFile = str.substring(0, str.length());
 				}
-			
-				if(read < BUFFER_SIZE || read == 0){
+				
+				isEOF = (m_Robots) ? read < BUFFER_SIZE || read == 0 : m_HTMLPageData.contains("</html");
+				
+				if (isEOF){
 					m_chunkedFileSize = fileSize;
 					if (m_Robots){
 						//m_RequestedFile = str.substring(0, str.length());
 					//	m_RobotsFile = str.substring(0, str.length());
+						
 					}
 					else {
 						if(!onlyHeaders){
-						//	m_HTMLPageData = str.substring(0, str.length());
-						//	System.out.println(m_HTMLPageData);
+//							m_HTMLPageData = str.substring(0, str.length());
+							//System.out.println(m_HTMLPageData);
 						} else {
 							m_RequestedFileSize = fileSize;
 						}
@@ -368,48 +364,14 @@ public class Downloader{
 					i_Reader.close();
 					break;
 				}
+				
+				buffer = new char[BUFFER_SIZE];
 			}
 			System.out.println("Done");
 		}
 		catch (Exception e){
 
 		}
-	}
-	
-	private void writeToHTMLFile(File f, StringBuilder str){
-		//write to file
-		Writer writer = null;
-
-		try {
-		    writer = new BufferedWriter(new OutputStreamWriter(
-		          new FileOutputStream(f), "utf-8"));
-
-		    writer.write(str.substring(0, str.length()));
-
-		} catch (IOException ex) {
-		  // report
-		} finally {
-		   try {writer.close();} catch (Exception ex) {}
-		}
-	}
-	private File createHTMLFile(){
-		Date date = new Date();
-		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
-		String fileName = "_" + dateFormat.format(date);
-
-		String path = "c:\\serverroot" + File.separator + "CrawlerResults" + File.separator + fileName + ".txt";
-		// Use relative path for Unix systems
-		File f = new File(path);
-		
-		f.getParentFile().mkdirs(); 
-		try {
-			f.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return f;
-	//DELETE
 	}
 
 	/**

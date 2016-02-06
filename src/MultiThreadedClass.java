@@ -15,6 +15,10 @@ public class MultiThreadedClass implements Runnable {
 	protected MyThreadPool threadPool;
 	protected String m_DefaultPage;
 	private PriorityTaskManager m_taskManager;
+	private int m_MaxDownloaders;
+	private int m_MaxAnalyzers;
+	private CrawlerJobManager m_CrawlerJob;
+	private boolean m_IsRuningStart = false;
 	
 	public MultiThreadedClass(int i_Port, String i_Root, String i_DefaultPage){
 		this.m_Root = i_Root;
@@ -27,7 +31,20 @@ public class MultiThreadedClass implements Runnable {
 	 */
 	public void run(){
 //		openServerSocket();
-//		while(!isStopped){
+		while(!m_IsRuningStart || threadPool.isAllThreadsFree() == false){
+			try {
+				Thread.sleep(1000);
+				System.out.println("Busy num is " + threadPool.getBusyNum());
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		System.out.println(5000);
+		System.out.println("~~~~~~~~~~~~~Busy num is " + threadPool.getBusyNum());
+		m_CrawlerJob.printStatistics();
+		
+		
 //			//At the beginning no client has connected so the client
 //			//socket is obviously null
 //			Socket clientSocket = null;
@@ -59,9 +76,13 @@ public class MultiThreadedClass implements Runnable {
 	/**
 	 * Creating a thread pool for the 10 threads that will
 	 * handle all clients here and starting the server. 
+	 * @param m_MaxAnalyzers 
+	 * @param m_MaxDownloaders 
 	 */
-	public void startTheServer(int i_MaxThreads) {
-		m_taskManager = new PriorityTaskManager();
+	public void startTheServer(int i_MaxThreads, int i_MaxDownloaders, int i_MaxAnalyzers) {
+		this.m_MaxDownloaders = i_MaxDownloaders;
+		this.m_MaxAnalyzers = i_MaxAnalyzers;
+		m_taskManager = new PriorityTaskManager(i_MaxDownloaders, i_MaxAnalyzers);
 		threadPool = new MyThreadPool(i_MaxThreads, m_taskManager);
 		m_taskManager.setThreadPool(threadPool);
 		new Thread(this).start();
@@ -88,8 +109,10 @@ public class MultiThreadedClass implements Runnable {
 	}
 
 	public void startCrawlerFlow(CrawlerJobManager crawlerJob) {
+		this.m_CrawlerJob = crawlerJob;
 		String domain = crawlerJob.getDomain();
 		addDownloaderTask(domain, crawlerJob);
+		this.m_IsRuningStart = true;
 	}
 	
 	public void addDownloaderTask(String url, CrawlerJobManager crawlerJob) {

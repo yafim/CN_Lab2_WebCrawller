@@ -3,13 +3,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class AnalyzerTask implements CrawlerTask {
+public class AnalyzerTask extends CrawlerTask {
 	private String url;
 	private String domain;
 	private String content;	
 	private CrawlerJobManager crawlerJobManager;
 	
 	public AnalyzerTask(String url, String content, String domain, CrawlerJobManager crawlerJobManager) {
+		super("Analyzer");
 		this.url = url;		
 		this.content = content;
 		this.domain = domain;
@@ -21,7 +22,7 @@ public class AnalyzerTask implements CrawlerTask {
 		Statistics stat = crawlerJobManager.getStatistics();
 		
 		System.out.println("Analyzer start analyze " + url);
-		System.out.println("--- Content: " + content);
+		System.out.println("--- Content length: " + content.length());
 		//content = "       <a    href \"hi\"   > <a .... href   =        \"www.google.com/bla\" .....>jhsdkjfhskdj</a> <a      href=\"nir@elbit100perHour.amen.co.il\">blll</a>";		
 		removeWhiteSpacesAfterTagStart();
 		//removeScriptTags();
@@ -29,7 +30,8 @@ public class AnalyzerTask implements CrawlerTask {
 		handleImgTags();
 		//handleVideoTags();
 		
-		stat.print();
+		System.out.println("Finish analyze " + url);
+//		stat.print();
 	}
 	
 //	private void removeScriptTags() {
@@ -101,12 +103,34 @@ public class AnalyzerTask implements CrawlerTask {
 		System.out.println("All links:");
 		System.out.println(aLinks);
 		for(String linkUrl : aLinks) {
-			if(isInternalLink(linkUrl)) {
-				stat.incrementInternalLinks();
-				if (linkUrl.startsWith("/"))
-					linkUrl = domain + linkUrl;
+			if(isInternalLink(linkUrl)) {				
+				if (linkUrl.startsWith("http://") == false && linkUrl.startsWith("https://") == false) {
+					if (linkUrl.startsWith("/")) 
+						linkUrl = domain + linkUrl;
+					else {
+						int lastIndexOfSlash = url.lastIndexOf("/");
+						if (lastIndexOfSlash == -1)
+							linkUrl = url + "/" + linkUrl; 
+						else {
+							int indexOfDot = url.indexOf('.', lastIndexOfSlash);
+							if (indexOfDot == -1) {
+								if (lastIndexOfSlash == (url.length() - 1))
+									linkUrl = url + linkUrl;
+								else
+									linkUrl = url + "/" + linkUrl;
+							}
+							else {
+								String urlWithoutPage = url.substring(0, lastIndexOfSlash + 1);
+								linkUrl = urlWithoutPage + linkUrl;
+							}
+						}
+					}
+				}
 				
-				crawlerJobManager.addDownloaderTask(linkUrl, crawlerJobManager);
+				if (crawlerJobManager.isInternalLinkExist(linkUrl) == false) {
+					stat.incrementInternalLinks();
+					crawlerJobManager.addDownloaderTask(linkUrl, crawlerJobManager);
+				}
 			} else {
 				stat.incrementExternalLinks();
 				int indexOfSlash = linkUrl.indexOf('/');
@@ -123,24 +147,38 @@ public class AnalyzerTask implements CrawlerTask {
 		if (linkUrl.startsWith("/"))
 			return true;
 		
-		linkUrl = linkUrl.replace("https://", "");
+		if (linkUrl.startsWith("https://"))
+			return false;
+		
+		if (linkUrl.startsWith("http://") == false)
+			return true;
+		
+		// start with http://
 		linkUrl = linkUrl.replace("http://", "");
 		String domainWithoutHttp = domain.replace("http://", "");
 		
-		if(linkUrl.startsWith("www.")) {
-			if (domainWithoutHttp.startsWith("www."))
-				return linkUrl.startsWith(domainWithoutHttp);
-			else 
-				return linkUrl.startsWith("www." + domainWithoutHttp);
-		}
-		else {
-			if(domainWithoutHttp.startsWith("www.")) {
-				linkUrl = "www." + linkUrl;
-				return linkUrl.startsWith(domainWithoutHttp);
-			}
-			else
-				return linkUrl.startsWith(domainWithoutHttp);						
-		}			
+		if (linkUrl.startsWith("www."))
+			linkUrl = linkUrl.substring(4);
+		
+		if (domainWithoutHttp.startsWith("www."))
+			domainWithoutHttp = domainWithoutHttp.substring(4);
+		
+		return linkUrl.startsWith(domainWithoutHttp);
+		
+//		if(linkUrl.startsWith("www.")) {
+//			if (domainWithoutHttp.startsWith("www."))
+//				return linkUrl.startsWith(domainWithoutHttp);
+//			else 
+//				return linkUrl.startsWith("www." + domainWithoutHttp);
+//		}
+//		else {
+//			if(domainWithoutHttp.startsWith("www.")) {
+//				linkUrl = "www." + linkUrl;
+//				return linkUrl.startsWith(domainWithoutHttp);
+//			}
+//			else
+//				return linkUrl.startsWith(domainWithoutHttp);						
+//		}			
 	}
 	
 	// <a .... href="urrrrrrl" .....>jhsdkjfhskdj</a>

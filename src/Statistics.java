@@ -28,31 +28,31 @@ public class Statistics {
 		this.openedPorts = new ArrayList<String>();
 	}
 	
-	public void addImage(int imageSize)
+	public synchronized void addImage(int imageSize)
 	{
 		this.imagesSize += imageSize;
 		this.numberOfImages++;
 	}
 	
-	public void addVideo(int videoSize) 
+	public synchronized void addVideo(int videoSize) 
 	{
 		this.videosSize += videoSize;
 		this.numberOfVideos++;
 	}
 	
-	public void addDocument(int documentSize) 
+	public synchronized void addDocument(int documentSize) 
 	{
 		this.documentsSize += documentSize;
 		this.numberOfDocuments++;
 	}
 	
-	public void addPage(int pageSize) 
+	public synchronized void addPage(int pageSize) 
 	{
 		this.pagesSize += pageSize;
 		this.numberOfPages++;
 	}
 	
-	public void addConnectedDomain(String domainName)
+	public synchronized void addConnectedDomain(String domainName)
 	{
 		if (connectedDomains.contains(domainName))
 			return;
@@ -61,23 +61,23 @@ public class Statistics {
 		this.connectedDomains.add(domainName);
 	}
 	
-	public void addPort(String portNumber)
+	public synchronized void addPort(String portNumber)
 	{
 		this.openedPorts.add(portNumber);
 	}
 	
-	public void addRTT(int timeOfRTT)
+	public synchronized void addRTT(int timeOfRTT)
 	{
 		this.sumOfAllRTTTimes += timeOfRTT;
 		this.numberOfRTT++;
 	}
 	
-	public void incrementInternalLinks() 
+	public synchronized void incrementInternalLinks() 
 	{
 		this.numberOfInternalLinks++;
 	}
 	
-	public void incrementExternalLinks() 
+	public synchronized void incrementExternalLinks() 
 	{
 		this.numberOfExternalLinks++;
 	}

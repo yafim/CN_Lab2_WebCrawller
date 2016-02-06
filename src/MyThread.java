@@ -35,8 +35,8 @@ public class MyThread {
 	 * Informing the thread pool that this thread has finished\ handling the
 	 * client request.
 	 */
-	public void onTaskComplete() {
-		myThreadPool.onTaskComplete(this);
+	public void onTaskComplete(CrawlerTask finishedTask) {
+		myThreadPool.onTaskComplete(this, finishedTask);
 	}
 
 	/**

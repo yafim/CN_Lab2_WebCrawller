@@ -31,8 +31,10 @@ public class ConnectionRunnable implements Runnable{
 	}
 
 	private void runTask() {
+		m_task.doTask();
+		CrawlerTask finishedTask = m_task;
 		m_task = null;
-		myThread.onTaskComplete();		
+		myThread.onTaskComplete(finishedTask);		
 	}
 
 	public boolean isBusy() {

@@ -35,7 +35,7 @@ public class MyThreadPool {
 		}
 	}
 
-	private MyThread getAvailableThread() {
+	private synchronized MyThread getAvailableThread() {
 		// Returning the first available thread
 		synchronized (m_availableThreads) {
 			if (!m_availableThreads.isEmpty()) {
@@ -93,23 +93,27 @@ public class MyThreadPool {
 	 * 
 	 * @param myThread
 	 */
-	public void onTaskComplete(MyThread myThread) {
-		m_taskManager.onTaskComplete();
-		// synchronized (waitingClients) {
-		// if(!waitingClients.isEmpty()) {
-		// myThread.execute(waitingClients.poll());
-		// return;
-		// }
-		// //No client is waiting so the thread is removed from busy thread list
-		// synchronized (m_busyThreads) {
-		// m_busyThreads.remove(myThread);
-		// }
-		// //The thread is added to the available thread list
-		// synchronized (m_availableThreads) {
-		// m_availableThreads.add(myThread);
-		// }
-		// //Telling the thread to be on wait mode until we will call him.
-		// myThread.waitForClient();
-		// }
+	public synchronized void onTaskComplete(MyThread myThread, CrawlerTask finishedTask) {
+		synchronized (m_taskManager) {
+			synchronized (m_busyThreads) {	
+				synchronized (m_availableThreads) {
+					m_busyThreads.remove(myThread);
+					m_availableThreads.add(myThread);
+					m_taskManager.onTaskComplete(finishedTask);					
+				}
+			}					
+		}
+	}
+	
+	public synchronized boolean isAllThreadsFree() {	
+		synchronized (m_busyThreads) {
+			return m_busyThreads.isEmpty();
+		}
+	}
+
+	public int getBusyNum() {
+		synchronized (m_busyThreads) {
+			return m_busyThreads.size();
+		}
 	}
 }
