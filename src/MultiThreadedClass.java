@@ -43,6 +43,7 @@ public class MultiThreadedClass implements Runnable {
 		System.out.println(5000);
 		System.out.println("~~~~~~~~~~~~~Busy num is " + threadPool.getBusyNum());
 		m_CrawlerJob.printStatistics();
+		m_CrawlerJob.createResultFile();
 		
 		
 //			//At the beginning no client has connected so the client

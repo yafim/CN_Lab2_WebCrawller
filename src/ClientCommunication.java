@@ -46,7 +46,7 @@ public class ClientCommunication {
 	
 	public void doClientRequestFlow() {
 		openServerSocket();
-		waitToClientSocket();
+		waitToClientSocket();			
 		
 		try {
 			m_HttpRequest = new HTTPRequest(m_Root, m_DefaultPage);
@@ -79,7 +79,7 @@ public class ClientCommunication {
 				if (m_IsHTTPRequestReady){
 					HashMap<String, Object> hm;
 
-					hm = m_HttpRequest.handleHttpRequest(m_HTTPRequest, m_IsChunked, m_In);
+					hm = m_HttpRequest.handleHttpRequest(m_HTTPRequest, m_IsChunked, m_In, false, null);
 					
 
 					// TODO: Clean and delete some stuff here.
@@ -134,50 +134,64 @@ public class ClientCommunication {
 					if(!m_HttpRequest.getHTMLParams().isEmpty()){
 						String responseMessage = "";
 						String filePath = "";
-						int size = -1;
+						int size = 0;
 						boolean success = false;
 						try{
 							m_Downloader = new Downloader();
 							m_Downloader.initParams(m_HttpRequest.getHTMLParams());
-						//	size = m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4");
-							
+			//			size = m_Downloader.getFileSizeFromURL("www.chesedu.org/#NavigationMenu_SkipLink");
+						
+							//	size = m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4");
+		//					size = m_Downloader.getFileSizeFromURL("http://www.israelbar.org.il/newsletter_register.asp");
+//							size = m_Downloader.getFileSizeFromURL("www.ynet.co.il");
 							responseMessage = "<h1>Crawler started successfully</h1><br>";
 							
 							success = true;
 						} 
 						catch (Exception e){
 							responseMessage = "<h1>Crawler failed to start because: " + e.getMessage() + "</h1><br>";
-							
-						} 
+						}
 						finally {
-							if (success){
-							//	System.err.println("Size : " + size);
-								createResultFile(m_Downloader.getRequestedDomainName());
-							}
-							
-							final File folder = new File(m_Root + File.separator + "CrawlerResults");
-							listFilesForFolder(folder);
-							
-							for(String fileName : listFilesForFolder(folder)){
-								filePath = "CrawlerResults" + File.separator + fileName;
-								responseMessage += "<a href='" + filePath + "'>" + fileName + "</a><br>";
-							}
-							responseMessage += "<a href='../'>BACK</a>\r\n\r\n";
+							if (success){								
+								final File folder = new File(m_Root + File.separator + "CrawlerResults");
+								listFilesForFolder(folder);
+
+								for(String fileName : listFilesForFolder(folder)){
+									filePath = "CrawlerResults" + File.separator + fileName;
+									responseMessage += "<a href='" + filePath + "'>" + fileName + "</a><br>";
+								}
+								responseMessage += "<a href='../'>BACK</a>\r\n\r\n";
 							
 							int newLength = responseMessage.length();
 							String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
-							m_OutToClient.writeBytes(newHeader);
 							
+							m_OutToClient.writeBytes(newHeader);
+							}
+							else {
+								hm = null;
+								String i_HTTPRequest = "GET / HTTP/1.1\r\nHost: localhost:8080\r\n\r\n";
+								byte[] responseMessageAsBytes = new byte[responseMessage.length()];
+								responseMessageAsBytes = responseMessage.getBytes();
+								hm = m_HttpRequest.handleHttpRequest(i_HTTPRequest, false, m_In, true, responseMessageAsBytes);
+								String head1 = (String)hm.get("HEADER");
+								byte[] html1 = (byte[]) hm.get("Content");
+								
+								m_OutToClient.writeBytes(head1);
+								if (html1 != null){
+									m_OutToClient.write(html1);
+								}
+							}
 						}
 						break;											
 					} else {
+					//	System.out.println(head);
 						m_OutToClient.writeBytes(head);
 						if (html != null){
 							m_OutToClient.write(html);
 						}
 					}
 					//END LAB2
-
+//					System.out.println("here");
 					clearRequestedData();
 					//return;
 					//System.out.println("clear");
@@ -219,85 +233,6 @@ public class ClientCommunication {
 	    return listOfFiles;
 	}
 	
-	private void createResultFile(String domain) throws IOException{
-		Date date = new Date();
-		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
-		String fileName = domain + "_" + dateFormat.format(date);
-
-		String path = m_Root + File.separator + "CrawlerResults" + File.separator + fileName + ".html";
-		// Use relative path for Unix systems
-		File f = new File(path);
-//		System.out.println(fileName + "created");
-		
-		//write to file
-		Writer writer = null;
-
-		try {
-		    writer = new BufferedWriter(new OutputStreamWriter(
-		          new FileOutputStream(f), "utf-8"));
-		    writer.write(getCrawlerStatistics());
-		} catch (IOException ex) {
-		  // report
-		} finally {
-		   try {writer.close();} catch (Exception ex) {/*ignore*/}
-		}
-		
-		f.getParentFile().mkdirs(); 
-		f.createNewFile();
-	}
-	
-	private String getCrawlerStatistics(){
-		StringBuilder str = new StringBuilder();
-		str.append("<html><head></head><body>");
-		//Did the crawler respect robots.txt or not.
-		str.append("Robots respect: <br>" );
-
-		//Number of images(from config.ini)
-		str.append("Number of images: <br>");
-
-		//Total size (in bytes) of images
-		str.append("Total size (in bytes) of images: <br>");
-
-//		Number of videos(from config.ini)
-		str.append("Number of videos: <br>");
-
-//		Total size (in bytes) of videos
-		str.append("Total size (in bytes) of videos: <br>");
-
-//		Number of document (from config.ini)
-		str.append("Number of documents: <br>");
-
-//		Total size (in bytes) of documents
-		str.append("Total size (in bytes) of documents: <br>");
-
-//		Number of pages(all detected files excluding images, videosand documents).
-		str.append("Number of pages: <br>");
-
-//		Total size (in bytes) of pages
-		str.append("Total size (in bytes) of pages: <br>");
-
-//		Number of internal links(pointing into the domain)
-		str.append("Number of internal links: <br>");
-
-//		Number of external links (pointing outside the domain)
-		str.append("Number of external links: <br>");
-
-//		Number of domains the crawled domain is connected to
-		str.append("Number of domains the crawled domain is connected to: <br>");
-
-//		The domains the crawled domain is connected to
-		str.append("The domains the crawled domain is connected to: <br>");
-
-//		If requested, the opened ports.
-		str.append("If requested, the opened ports: <br>");
-
-//		Average RTT in milliseconds (Time passed from sending the HTTP request until received the HTTP response, excludingreading the response).
-		str.append("Average RTT in milliseconds: <br>");
-		
-		str.append("<a href='../'>BACK</a><br></body></html>");
-		
-		return str.substring(0, str.length());
-	}
 	// remove until here
 
 	private void waitToClientSocket() {

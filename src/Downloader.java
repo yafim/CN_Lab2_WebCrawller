@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class Downloader{
 
-	private final int TIMEOUT = 10;
+	private final int TIMEOUT = 22;
 	private final int PORT = 80;
 	private final int MAX_REDIRECTIONS = 5;
 	private final int BUFFER_SIZE = 1024;
@@ -29,7 +29,13 @@ public class Downloader{
 	private String m_RequestedFile;
 	private String m_RobotsFile;
 	private String m_Host = "";
+	private String m_OriginalHost;
 	private String m_HTMLPageData;
+	
+	private long m_StartTime = 0;
+	private long m_EstimatedRTTTime = 0;
+	private long m_EstimatedRTTTimeForRobots = 0;
+	private long m_RequestedFileRTTTime = 0;
 
 	private int m_chunkedFileSize;
 	private int m_Redirections = 0;
@@ -39,6 +45,7 @@ public class Downloader{
 	private boolean m_IsChunked = false;
 	private boolean m_ErrorFound = false;
 	private boolean m_Robots = false;
+	private boolean m_IsFile = false;
 	
 	private ArrayList<Integer> m_OpenPorts;
 
@@ -46,10 +53,13 @@ public class Downloader{
 	public String getHTMLPageDataWithoutScripts(){return this.m_HTMLPageDataWithoutScripts;}
 	public String getHTMLPageData() {return this.m_HTMLPageData;}
 	public String getRobotsFile() {return this.m_RobotsFile;}
-	public String getRequestedDomainName() {return this.m_Host.split("\\.")[1];}
+	public String getRequestedDomainName() {return this.m_OriginalHost.split("\\.")[1];}
 	public int getContentLength() {return (m_IsChunked) ? this.m_chunkedFileSize : this.m_HTMLPageData.length();}
 	public boolean isRobotsEnabled() {return !this.m_RobotsFile.isEmpty();}
 	public ArrayList<Integer> getOpenPorts() {return this.m_OpenPorts;}
+	public long getRTTTime() {return (this.m_EstimatedRTTTime + this.m_EstimatedRTTTimeForRobots);}
+	public long getRobotsRTTTime() {return this.m_EstimatedRTTTimeForRobots;}
+	public long getRequestedFileRTTTime() {return this.m_RequestedFileRTTTime;}
 	private TimeoutTimer timer;
 	private boolean m_IsRobots;
 	private boolean m_IsTCP;
@@ -60,12 +70,11 @@ public class Downloader{
 	 * @throws Exception 
 	 */
 	public Downloader(String i_URL) throws Exception{
-
 		getHTTPRequestData(false, i_URL);
 	}
 
 	public Downloader(){}
-
+	
 	/**
 	 * Get HTTP Request
 	 * @param i_URL
@@ -79,7 +88,11 @@ public class Downloader{
 			m_Host = args[0];
 			m_RequestedFile = args[1];
 		}
-
+		
+		if (m_StartTime == 0){
+			m_StartTime = System.currentTimeMillis();
+		}
+		
 		m_Socket = new Socket(m_URL, PORT);
 
 		m_URLHeaders = new HashMap<String, String>();
@@ -91,11 +104,33 @@ public class Downloader{
 		out.flush(); 
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(m_Socket.getInputStream(), "UTF8")); 
-
+		
+		measureRTTTime();
+		
+		if (!m_Robots && !m_IsFile){
+			m_OriginalHost = m_Host;
+		}
+		
 		getHTTPRequestData(reader, onlyHeaders);
-
+		
 		reader.close(); 
 		m_Socket.close();
+	}
+	
+	/**
+	 * Measure RTT time based
+	 */
+	private void measureRTTTime(){
+		if (!m_Robots){
+			if (m_IsFile){
+				m_RequestedFileRTTTime = System.currentTimeMillis() - m_StartTime;
+			} else {
+				m_EstimatedRTTTime = System.currentTimeMillis() - m_StartTime;
+			}
+		}
+		else {
+			m_EstimatedRTTTimeForRobots = System.currentTimeMillis() - m_StartTime;
+		}
 	}
 
 	/**
@@ -106,11 +141,13 @@ public class Downloader{
 		System.out.println("checkRobotsFile();");
 		try {
 			m_Robots = true;
+			m_StartTime = 0;
 			getHTTPRequestData(false, m_URL + "/robots.txt");
 		} catch (IOException e) {
 			throw new Exception("No robots file");
 		} finally{
 			m_Robots = false;
+			m_StartTime = 0;
 		}
 	}
 
@@ -127,7 +164,7 @@ public class Downloader{
 		m_IsChunked = false;
 
 		timer = new TimeoutTimer(TIMEOUT);
-
+		
 		while ((c = i_Reader.read()) != -1) {
 			if (timer.timeOut){
 				throw new Exception("Timeout...");
@@ -145,7 +182,7 @@ public class Downloader{
 					if (newLineFlag == 2){
 						if (m_ErrorFound){
 							sendHTTPRequestWithDifferentURL(m_URLHeaders.get("Location"), onlyHeaders);
-						} 
+						}
 						else {
 							if(!onlyHeaders){
 								if (!m_IsChunked){
@@ -183,7 +220,7 @@ public class Downloader{
 	 */
 	private void setHeader(String i_Header){
 		String[] splittedString;
-	//	System.out.println(i_Header);
+		System.out.println(i_Header);
 		try{
 			splittedString = i_Header.replaceAll("\\s","").split(":", 2);
 			if (splittedString[0].toLowerCase().equals("content-length")){
@@ -323,9 +360,9 @@ public class Downloader{
 		args[0] = getFileHost(fixedFileURL);
 		args[1] = getFileFullName(fixedFileURL);
 
-
+		m_IsFile = true;
 		getHTTPRequestData(true, args);
-
+		m_IsFile = false;
 		return (m_IsChunked) ? m_RequestedFileSize : Integer.parseInt(m_URLHeaders.get("Content-Length"));
 	}
 
@@ -379,7 +416,6 @@ public class Downloader{
 			
 		}
 		catch (Exception e){
-
 		}
 	}
 
@@ -389,7 +425,13 @@ public class Downloader{
 	 * @return
 	 */
 	private String getFileFullName(String i_FilePath){
-		return i_FilePath.substring(i_FilePath.indexOf("/"));
+		String toReturn = "";
+		try {
+			toReturn = i_FilePath.substring(i_FilePath.indexOf("/"));
+		} catch (Exception e) {
+			toReturn = i_FilePath;
+		}
+		return toReturn;
 	}
 
 	/**

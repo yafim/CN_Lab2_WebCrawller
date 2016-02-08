@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +49,7 @@ public class Main {
 			ClientCommunication clientCommunication = new ClientCommunication(m_Root, m_Port, m_DefaultPage);
 			clientCommunication.doClientRequestFlow();
 			
+			Date crawlerStartTime = new Date();
 			String requestedUrl = clientCommunication.getRequestedUrl();
 			boolean isRespectedRobotFile = clientCommunication.isRobotFileRespected();
 			boolean isRequestedTcpPortsScan = clientCommunication.isTCPOpenPortsRequested();
@@ -56,7 +58,7 @@ public class Main {
 			ExtensionsChecker extensionChecker = new ExtensionsChecker(m_ImageExtensions, m_VideoExtensions, m_DocumentExtensions);
 			// change it
 			CrawlerJobManager crawlerManager = new CrawlerJobManager(server, requestedUrl, isRespectedRobotFile, isRequestedTcpPortsScan, extensionChecker);
-			crawlerManager.start(robotsFileContent);
+			crawlerManager.start(robotsFileContent, crawlerStartTime);
 			
 			// Remove this logic from here...
 
@@ -88,7 +90,8 @@ public class Main {
 		} catch (UnsupportedEncodingException e) {
 			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
 		} catch (Exception e){
-			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
+			System.err.println(e.getMessage());
+	//		System.err.println("Please check " + sr_ConfigFile.getName() + " file");
 		}
 	}		
 			

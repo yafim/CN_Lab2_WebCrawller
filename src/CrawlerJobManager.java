@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -30,8 +31,8 @@ public class CrawlerJobManager {
 		this.internalUrls.add(domain);
 	}
 
-	public void start(String[] robotsFileContent) {
-		statistics = new Statistics(isRespectedRobot, isRequestedOpenPorts);
+	public void start(String[] robotsFileContent, Date crawlerStartTime) {
+		statistics = new Statistics(domain, isRespectedRobot, isRequestedOpenPorts, crawlerStartTime);
 		parseRobots(robotsFileContent);		
 		server.startCrawlerFlow(this);
 	}
@@ -104,12 +105,12 @@ public class CrawlerJobManager {
 			long fileSize = downloader.getFileSizeFromURL(fileUrl);
 			
 			Date end = new Date();
-			long rtt = (end.getTime() - start.getTime())/1000/60;
+			long rtt = (end.getTime() - start.getTime());
 			
 			getStatistics().addRTT(rtt);
 			return fileSize;
 		} catch (Exception e) {
-			System.out.println("Image file size process error for " + fileUrl +" --- " + e.getMessage());
+			System.out.println("File size process error for " + fileUrl +" --- " + e.getMessage());
 		}
 		return 0;
 	}
@@ -272,6 +273,14 @@ public class CrawlerJobManager {
 			statistics.addPage(size);
 			addDownloaderTask(linkUrl);
 			addInternalLink(linkUrl);
+		}
+	}
+
+	public void createResultFile() {
+		try {
+			statistics.createResultFile();
+		} catch (IOException e) {
+			System.out.println("Error: Cant create result file. " + e.getMessage());
 		}
 	}
 }
