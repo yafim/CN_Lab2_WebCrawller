@@ -18,7 +18,6 @@ public class MultiThreadedClass implements Runnable {
 	private int m_MaxDownloaders;
 	private int m_MaxAnalyzers;
 	private CrawlerJobManager m_CrawlerJob;
-	private boolean m_IsRuningStart = false;
 	
 	public MultiThreadedClass(int i_Port, String i_Root, String i_DefaultPage){
 		this.m_Root = i_Root;
@@ -31,10 +30,11 @@ public class MultiThreadedClass implements Runnable {
 	 */
 	public void run(){
 //		openServerSocket();
-		while(!m_IsRuningStart || threadPool.isAllThreadsFree() == false){
+		while(threadPool.isAllThreadsFree() == false){
 			try {
 				Thread.sleep(1000);
 				System.out.println("Busy num is " + threadPool.getBusyNum());
+				m_CrawlerJob.printStatistics();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -84,8 +84,7 @@ public class MultiThreadedClass implements Runnable {
 		this.m_MaxAnalyzers = i_MaxAnalyzers;
 		m_taskManager = new PriorityTaskManager(i_MaxDownloaders, i_MaxAnalyzers);
 		threadPool = new MyThreadPool(i_MaxThreads, m_taskManager);
-		m_taskManager.setThreadPool(threadPool);
-		new Thread(this).start();
+		m_taskManager.setThreadPool(threadPool);		
 	}
 
 	public synchronized void stop(){
@@ -112,7 +111,8 @@ public class MultiThreadedClass implements Runnable {
 		this.m_CrawlerJob = crawlerJob;
 		String domain = crawlerJob.getDomain();
 		addDownloaderTask(domain, crawlerJob);
-		this.m_IsRuningStart = true;
+		crawlerJob.handleDisrespectingRobots();
+		new Thread(this).start();
 	}
 	
 	public void addDownloaderTask(String url, CrawlerJobManager crawlerJob) {

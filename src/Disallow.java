@@ -90,4 +90,12 @@ public class Disallow {
 			System.out.println("Allow: " + allow);
 		}
 	}
+
+	public ArrayList<String> getAllows() {
+		return allows;
+	}
+	
+	public String getUrl() {
+		return url;
+	}
 }

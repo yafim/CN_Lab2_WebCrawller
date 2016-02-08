@@ -14,6 +14,10 @@ public class RobotFileParser {
 		this.robotsFileContent = robotsFileContent;
 	}
 	
+	public ArrayList<Disallow> getDisallows() {
+		return disallows;
+	}
+	
 	public void parse() {		
 		int linesCounter = getUserAgentLineIndex(robotsFileContent);
 		if (linesCounter == -1 || linesCounter + 1 == robotsFileContent.length)

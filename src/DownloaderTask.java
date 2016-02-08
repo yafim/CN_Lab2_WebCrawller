@@ -1,3 +1,5 @@
+import java.util.Date;
+
 public class DownloaderTask extends CrawlerTask{
 	private String url;
 	private CrawlerJobManager crawlerJobManager;
@@ -17,9 +19,20 @@ public class DownloaderTask extends CrawlerTask{
 		
 		Downloader downloader;
 		try {
+			Date start = new Date();
 			downloader = new Downloader(url);
+			Date end = new Date();
+			long rtt = (end.getTime() - start.getTime())/1000/60;
+			crawlerJobManager.getStatistics().addRTT(rtt);
+			
 			String content = downloader.getHTMLPageData();
 
+			if (content == null) {
+				return;
+			}
+			
+			content = content.replaceAll("\r\n", " ").replace("\n", " ");
+			
 			// add analyzer task
 			crawlerJobManager.addAnalayzerTask(url, content, crawlerJobManager);
 		} catch (Exception e) {
