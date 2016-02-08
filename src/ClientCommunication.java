@@ -139,7 +139,11 @@ public class ClientCommunication {
 						try{
 							m_Downloader = new Downloader();
 							m_Downloader.initParams(m_HttpRequest.getHTMLParams());
-			//			size = m_Downloader.getFileSizeFromURL("www.chesedu.org/#NavigationMenu_SkipLink");
+						//	System.out.println(m_Downloader.getHTMLPageData());
+					//	size = m_Downloader.getFileSizeFromURL("www.chesedu.org/#NavigationMenu_SkipLink");
+						
+//						System.out.println(m_Downloader.getRobotsFile("www.ynet.co.il"));
+					//		System.out.println(m_Downloader.getHTMLPageData());
 						
 							//	size = m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4");
 		//					size = m_Downloader.getFileSizeFromURL("http://www.israelbar.org.il/newsletter_register.asp");
@@ -288,8 +292,9 @@ public class ClientCommunication {
 		return m_Downloader.isRobotFileRespected();
 	}
 	
-	public String[] getRobotsFileContent() {
-		return m_Downloader.getRobotsFile().split("\n");
+	public String[] getRobotsFileContent(String domain) {
+		return m_Downloader.getRobotsFile(domain).split("\n");
+//		return m_Downloader.getRobotsFile("w").split("\r\n");
 	}
 
 }

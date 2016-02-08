@@ -52,12 +52,22 @@ public class Downloader{
 	public HashMap<String, String> getHeaders(){return this.m_URLHeaders;}
 	public String getHTMLPageDataWithoutScripts(){return this.m_HTMLPageDataWithoutScripts;}
 	public String getHTMLPageData() {return this.m_HTMLPageData;}
-	public String getRobotsFile() {return this.m_RobotsFile;}
+	
+	public String getRobotsFile(String i_URL){
+		try {
+			checkRobotsFile(i_URL);
+		} catch (Exception e) {
+			System.err.println("no robots.txt file");
+			return null;
+		}
+		return this.m_RobotsFile;
+	}
+	
 	public String getRequestedDomainName() {return this.m_OriginalHost.split("\\.")[1];}
 	public int getContentLength() {return (m_IsChunked) ? this.m_chunkedFileSize : this.m_HTMLPageData.length();}
 	public boolean isRobotsEnabled() {return !this.m_RobotsFile.isEmpty();}
 	public ArrayList<Integer> getOpenPorts() {return this.m_OpenPorts;}
-	public long getRTTTime() {return (this.m_EstimatedRTTTime + this.m_EstimatedRTTTimeForRobots);}
+	public long getRTTTime() {return (this.m_EstimatedRTTTime);}
 	public long getRobotsRTTTime() {return this.m_EstimatedRTTTimeForRobots;}
 	public long getRequestedFileRTTTime() {return this.m_RequestedFileRTTTime;}
 	private TimeoutTimer timer;
@@ -137,12 +147,11 @@ public class Downloader{
 	 * Check if site contains robots.txt file, if so get it.
 	 * @throws Exception 
 	 */
-	private void checkRobotsFile() throws Exception{
-		System.out.println("checkRobotsFile();");
+	private void checkRobotsFile(String i_URL) throws Exception{
 		try {
 			m_Robots = true;
 			m_StartTime = 0;
-			getHTTPRequestData(false, m_URL + "/robots.txt");
+			getHTTPRequestData(false, i_URL + "/robots.txt");
 		} catch (IOException e) {
 			throw new Exception("No robots file");
 		} finally{
@@ -363,6 +372,8 @@ public class Downloader{
 		m_IsFile = true;
 		getHTTPRequestData(true, args);
 		m_IsFile = false;
+		
+		System.out.println("here");
 		return (m_IsChunked) ? m_RequestedFileSize : Integer.parseInt(m_URLHeaders.get("Content-Length"));
 	}
 
@@ -460,7 +471,7 @@ public class Downloader{
 	public void initParams(HashMap<String, String> i_Params) throws Exception{
 		parseParams(i_Params);
 		getHTTPRequestData(false, m_URL);
-		checkRobotsFile();
+		//checkRobotsFile();
 		if (m_IsTCP){
 			m_OpenPorts = new ArrayList<>();
 			portScanner(m_URL);
