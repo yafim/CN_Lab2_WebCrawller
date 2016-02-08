@@ -79,7 +79,7 @@ public class ClientCommunication {
 				if (m_IsHTTPRequestReady){
 					HashMap<String, Object> hm;
 
-					hm = m_HttpRequest.handleHttpRequest(m_HTTPRequest, m_IsChunked, m_In);
+					hm = m_HttpRequest.handleHttpRequest(m_HTTPRequest, m_IsChunked, m_In, false, null);
 					
 
 					// TODO: Clean and delete some stuff here.
@@ -134,52 +134,68 @@ public class ClientCommunication {
 					if(!m_HttpRequest.getHTMLParams().isEmpty()){
 						String responseMessage = "";
 						String filePath = "";
-						int size = -1;
+						int size = 0;
 						boolean success = false;
 						try{
 							m_Downloader = new Downloader();
 							m_Downloader.initParams(m_HttpRequest.getHTMLParams());
-						//	size = m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4");
-							
+			//			size = m_Downloader.getFileSizeFromURL("www.chesedu.org/#NavigationMenu_SkipLink");
+						
+							//	size = m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4");
+		//					size = m_Downloader.getFileSizeFromURL("http://www.israelbar.org.il/newsletter_register.asp");
+//							size = m_Downloader.getFileSizeFromURL("www.ynet.co.il");
 							responseMessage = "<h1>Crawler started successfully</h1><br>";
 							
 							success = true;
 						} 
 						catch (Exception e){
 							responseMessage = "<h1>Crawler failed to start because: " + e.getMessage() + "</h1><br>";
-							
-						} 
+						}
 						finally {
 							if (success){
-							//	System.err.println("Size : " + size);
 								createResultFile(m_Downloader.getRequestedDomainName());
-							}
-							
-							final File folder = new File(m_Root + File.separator + "CrawlerResults");
-							listFilesForFolder(folder);
-							
-							for(String fileName : listFilesForFolder(folder)){
-								filePath = "CrawlerResults" + File.separator + fileName;
-								responseMessage += "<a href='" + filePath + "'>" + fileName + "</a><br>";
-							}
-							responseMessage += "<a href='../'>BACK</a>\r\n\r\n";
+
+								final File folder = new File(m_Root + File.separator + "CrawlerResults");
+								listFilesForFolder(folder);
+
+								for(String fileName : listFilesForFolder(folder)){
+									filePath = "CrawlerResults" + File.separator + fileName;
+									responseMessage += "<a href='" + filePath + "'>" + fileName + "</a><br>";
+								}
+								responseMessage += "<a href='../'>BACK</a>\r\n\r\n";
 							
 							int newLength = responseMessage.length();
 							String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
-							m_OutToClient.writeBytes(newHeader);
 							
+							m_OutToClient.writeBytes(newHeader);
+							}
+							else {
+								hm = null;
+								String i_HTTPRequest = "GET / HTTP/1.1\r\nHost: localhost:8080\r\n\r\n";
+								byte[] responseMessageAsBytes = new byte[responseMessage.length()];
+								responseMessageAsBytes = responseMessage.getBytes();
+								hm = m_HttpRequest.handleHttpRequest(i_HTTPRequest, false, m_In, true, responseMessageAsBytes);
+								String head1 = (String)hm.get("HEADER");
+								byte[] html1 = (byte[]) hm.get("Content");
+								
+								m_OutToClient.writeBytes(head1);
+								if (html1 != null){
+									m_OutToClient.write(html1);
+								}
+							}
 						}
 						
 					//	return;
 						
 					} else {
+					//	System.out.println(head);
 						m_OutToClient.writeBytes(head);
 						if (html != null){
 							m_OutToClient.write(html);
 						}
 					}
 					//END LAB2
-
+//					System.out.println("here");
 					clearRequestedData();
 					//return;
 					//System.out.println("clear");
@@ -249,10 +265,11 @@ public class ClientCommunication {
 	}
 	
 	private String getCrawlerStatistics(){
+		String listOfOpenPorts = "";
 		StringBuilder str = new StringBuilder();
 		str.append("<html><head></head><body>");
 		//Did the crawler respect robots.txt or not.
-		str.append("Robots respect: <br>" );
+		str.append("Robots respect: " + m_Downloader.isRobotFileRespected() + "<br>" );
 
 		//Number of images(from config.ini)
 		str.append("Number of images: <br>");
@@ -261,7 +278,7 @@ public class ClientCommunication {
 		str.append("Total size (in bytes) of images: <br>");
 
 //		Number of videos(from config.ini)
-		str.append("Number of videos: <br>");
+		str.append("Number of videos: " + m_Downloader.getRequestedFileRTTTime() + "<br>");
 
 //		Total size (in bytes) of videos
 		str.append("Total size (in bytes) of videos: <br>");
@@ -291,10 +308,17 @@ public class ClientCommunication {
 		str.append("The domains the crawled domain is connected to: <br>");
 
 //		If requested, the opened ports.
-		str.append("If requested, the opened ports: <br>");
+		if (m_Downloader.getOpenPorts() != null){
+			for(int port : m_Downloader.getOpenPorts()){
+				listOfOpenPorts += " " + port + " ";
+			}
+		} else {
+			listOfOpenPorts = "---";
+		}
+		str.append("If requested, the opened ports: " + listOfOpenPorts + "<br>");
 
 //		Average RTT in milliseconds (Time passed from sending the HTTP request until received the HTTP response, excludingreading the response).
-		str.append("Average RTT in milliseconds: <br>");
+		str.append("Average RTT in milliseconds: " + m_Downloader.getRTTTime() + "<br>");
 		
 		str.append("<a href='../'>BACK</a><br></body></html>");
 		

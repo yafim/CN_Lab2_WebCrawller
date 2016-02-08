@@ -27,7 +27,8 @@ public class HTTPRequest {
 	private final String OK_MSG = "200 OK";
 	private final String FORBIDDEN_ERR_MSG = "403 Forbidden";
 	private final String m_ForbiddenMessageHTML = FORBIDDEN_ERR_MSG + "<br><a href='/'>BACK</a>";
-
+	private byte[] m_ExecResultError;
+	
 	/** HTTP request variables */
 	private String m_HTTPRequest = null;
 	private String[] m_SplitHTTPRequest = null;	
@@ -46,6 +47,7 @@ public class HTTPRequest {
 	private String m_FileExtension;
 	private boolean m_IsImage = false;
 	private boolean m_IsForbiddenErr = false;
+	private boolean m_GoToDefaultPage = false;
 
 	/** Read file variables */	
 	private static FileInputStream m_FileInputStream = null;
@@ -138,12 +140,17 @@ public class HTTPRequest {
 	 * @param i_HTTPRequest
 	 * @throws Exception
 	 */
-	public HashMap<String, Object> handleHttpRequest(String i_HTTPRequest, boolean i_IsChunked, BufferedReader i_In) throws Exception{
+	public HashMap<String, Object> handleHttpRequest(String i_HTTPRequest, boolean i_IsChunked, BufferedReader i_In, boolean i_GoToDefaultPage, byte[] i_ExecResultError) throws Exception{
 		m_IsChunked = i_IsChunked;
 		m_HTTPRequest = i_HTTPRequest;
 		m_In = i_In;
+		m_GoToDefaultPage = i_GoToDefaultPage;
+		if (i_ExecResultError != null){
+			m_ExecResultError = new byte[i_ExecResultError.length];
+			m_ExecResultError = i_ExecResultError;
+		}
 		// print HTTP request to console
-	//	System.out.println(m_HTTPRequest);
+		//System.err.println(m_HTTPRequest);
 
 
 		try{
@@ -237,6 +244,7 @@ public class HTTPRequest {
 			String fileName = m_RequestedFileFullPath.getName();
 			String[] variables = fileName.split("\\?");
 			
+			
 			if (variables.length == 1){
 				throw new NoVariablesException("No variables to parse");
 			}
@@ -297,7 +305,7 @@ public class HTTPRequest {
 			// get the file
 			boolean defaultPageGiven = (sString[1].equals("/"));
 
-			m_RequestedFileFullPath = (defaultPageGiven) ? new File(m_Root + m_DefaultPage)
+			m_RequestedFileFullPath = (defaultPageGiven || m_GoToDefaultPage) ? new File(m_Root + m_DefaultPage)
 			: new File(m_Root + sString[1]);
 			
 			// get HTTP version
@@ -516,6 +524,13 @@ public class HTTPRequest {
 				// open file...
 				if (!m_IsChunked){
 					m_RequestedFileContent = readFile(m_RequestedFileFullPath);
+					if (m_GoToDefaultPage){
+						byte[] c = new byte[m_ExecResultError.length + m_RequestedFileContent.length];						
+						System.arraycopy(m_ExecResultError, 0, c, 0, m_ExecResultError.length);
+						System.arraycopy(m_RequestedFileContent, 0, c, m_ExecResultError.length, m_RequestedFileContent.length);
+						m_RequestedFileContent = c;
+
+					}
 				}
 			}
 			else {
@@ -703,6 +718,7 @@ boolean m_Error = false; // TODO
 	 */
 	public void clear(){
 		/** HTTP request variables */
+		m_GoToDefaultPage = false;
 		m_IsValidReferer = true;
 		m_IsValidRequest = false;
 		m_HTTPRequest = "";
@@ -756,6 +772,10 @@ boolean m_Error = false; // TODO
 		if (m_IsForbiddenErr){
 			contentLength = m_ForbiddenMessageHTML.length();
 		}
+		
+/*		if(m_GoToDefaultPage){
+			contentLength += m_ExecResultError.length;
+		}*/
 		return contentLength + "";
 	}
 

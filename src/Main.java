@@ -87,7 +87,8 @@ public class Main {
 		} catch (UnsupportedEncodingException e) {
 			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
 		} catch (Exception e){
-			System.err.println("Please check " + sr_ConfigFile.getName() + " file");
+			System.err.println(e.getMessage());
+	//		System.err.println("Please check " + sr_ConfigFile.getName() + " file");
 		}
 	}		
 			
