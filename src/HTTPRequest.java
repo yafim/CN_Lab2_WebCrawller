@@ -95,7 +95,7 @@ public class HTTPRequest {
 
 		return m_FileParmas;
 	}
-
+	
 	/**
 	 * Get the variables after post message sent
 	 */

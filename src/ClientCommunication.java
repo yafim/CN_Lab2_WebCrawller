@@ -33,21 +33,17 @@ public class ClientCommunication {
 	private String m_DefaultPage;
 	private ServerSocket m_ServerSocket;
 	private int m_Port;
-	
-	//lab2
 
-	//lab2end
-	
 	public ClientCommunication(String i_Root, int i_Port, String i_DefaultPage) {
 		m_Root = i_Root;
 		m_Port = i_Port;
 		m_DefaultPage = i_DefaultPage;
 	}
-	
+
 	public void doClientRequestFlow() {
 		openServerSocket();
 		waitToClientSocket();			
-		
+
 		try {
 			m_HttpRequest = new HTTPRequest(m_Root, m_DefaultPage);
 			input  = m_ClientSocket.getInputStream();
@@ -80,16 +76,14 @@ public class ClientCommunication {
 					HashMap<String, Object> hm;
 
 					hm = m_HttpRequest.handleHttpRequest(m_HTTPRequest, m_IsChunked, m_In, false, null);
-					
+
 
 					// TODO: Clean and delete some stuff here.
 					String head = (String)hm.get("HEADER");
 					byte[] html = (byte[]) hm.get("Content");
 
 
-				//	System.out.println(head);
-
-
+					//	System.out.println(head);
 					if (m_HttpRequest.getHTMLParams() != null){
 						String params = "";
 						int sum = 0;
@@ -99,8 +93,8 @@ public class ClientCommunication {
 							sum += key.length()+value.length();
 						}
 						params = Integer.toString(sum);
-//						System.out.println(params);
-						
+						//						System.out.println(params);
+
 						if (m_IsChunked){
 							m_OutToClient.writeBytes(Integer.toHexString(params.length()));
 							m_OutToClient.writeBytes("\r\n");
@@ -129,7 +123,7 @@ public class ClientCommunication {
 						m_OutToClient.writeBytes("\r\n");
 						m_OutToClient.writeBytes("\r\n");
 					}
-					
+
 					//LAB 2
 					if(!m_HttpRequest.getHTMLParams().isEmpty()){
 						String responseMessage = "";
@@ -139,17 +133,17 @@ public class ClientCommunication {
 						try{
 							m_Downloader = new Downloader();
 							m_Downloader.initParams(m_HttpRequest.getHTMLParams());
-						//	System.out.println(m_Downloader.getHTMLPageData());
-					//	size = m_Downloader.getFileSizeFromURL("www.chesedu.org/#NavigationMenu_SkipLink");
-						
-//						System.out.println(m_Downloader.getRobotsFile("www.ynet.co.il"));
-					//		System.out.println(m_Downloader.getHTMLPageData());
-						
+							//	System.out.println(m_Downloader.getHTMLPageData());
+							//	size = m_Downloader.getFileSizeFromURL("www.chesedu.org/#NavigationMenu_SkipLink");
+
+							//						System.out.println(m_Downloader.getRobotsFile("www.ynet.co.il"));
+							//		System.out.println(m_Downloader.getHTMLPageData());
+
 							//	size = m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4");
-		//					size = m_Downloader.getFileSizeFromURL("http://www.israelbar.org.il/newsletter_register.asp");
-//							size = m_Downloader.getFileSizeFromURL("www.ynet.co.il");
+							//					size = m_Downloader.getFileSizeFromURL("http://www.israelbar.org.il/newsletter_register.asp");
+							//							size = m_Downloader.getFileSizeFromURL("www.ynet.co.il");
 							responseMessage = "<h1>Crawler started successfully</h1><br>";
-							
+
 							success = true;
 						} 
 						catch (Exception e){
@@ -165,11 +159,11 @@ public class ClientCommunication {
 									responseMessage += "<a href='" + filePath + "'>" + fileName + "</a><br>";
 								}
 								responseMessage += "<a href='../'>BACK</a>\r\n\r\n";
-							
-							int newLength = responseMessage.length();
-							String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
-							
-							m_OutToClient.writeBytes(newHeader);
+
+								int newLength = responseMessage.length();
+								String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
+
+								m_OutToClient.writeBytes(newHeader);
 							}
 							else {
 								hm = null;
@@ -179,23 +173,25 @@ public class ClientCommunication {
 								hm = m_HttpRequest.handleHttpRequest(i_HTTPRequest, false, m_In, true, responseMessageAsBytes);
 								String head1 = (String)hm.get("HEADER");
 								byte[] html1 = (byte[]) hm.get("Content");
-								
+
 								m_OutToClient.writeBytes(head1);
 								if (html1 != null){
 									m_OutToClient.write(html1);
 								}
 							}
 						}
-						break;											
+						//TODO
+						//!!!!!!!!!!!!if you will move this break reading the files in links will work!!!!!!!!!!!!!!!!1
+						//						break;											
 					} else {
-					//	System.out.println(head);
+						//	System.out.println(head);
 						m_OutToClient.writeBytes(head);
 						if (html != null){
 							m_OutToClient.write(html);
 						}
 					}
 					//END LAB2
-//					System.out.println("here");
+					//					System.out.println("here");
 					clearRequestedData();
 					//return;
 					//System.out.println("clear");
@@ -220,23 +216,23 @@ public class ClientCommunication {
 			}
 		}
 	}
-	
+
 	// remove from here
-	
+
 	public ArrayList<String> listFilesForFolder(final File folder) {
 		ArrayList<String> listOfFiles = new ArrayList<>();
-		
-	    for (final File fileEntry : folder.listFiles()) {
-	        if (fileEntry.isDirectory()) {
-	            listFilesForFolder(fileEntry);
-	        } else {
-	            listOfFiles.add(fileEntry.getName());
-	        }
-	    }
-	    
-	    return listOfFiles;
+
+		for (final File fileEntry : folder.listFiles()) {
+			if (fileEntry.isDirectory()) {
+				listFilesForFolder(fileEntry);
+			} else {
+				listOfFiles.add(fileEntry.getName());
+			}
+		}
+
+		return listOfFiles;
 	}
-	
+
 	// remove until here
 
 	private void waitToClientSocket() {
@@ -279,22 +275,22 @@ public class ClientCommunication {
 		m_HttpRequest.clear();
 		m_IsHTTPRequestReady = false;
 	}
-	
+
 	public String getRequestedUrl() {
 		return m_Downloader.getRequestedUrl();
 	}
-	
+
 	public boolean isTCPOpenPortsRequested() {
 		return m_Downloader.isTCPOpenPortsRequested();
 	}
-	
+
 	public boolean isRobotFileRespected() {
 		return m_Downloader.isRobotFileRespected();
 	}
-	
+
 	public String[] getRobotsFileContent(String domain) {
 		return m_Downloader.getRobotsFile(domain).split("\n");
-//		return m_Downloader.getRobotsFile("w").split("\r\n");
+		//		return m_Downloader.getRobotsFile("w").split("\r\n");
 	}
 
 }
