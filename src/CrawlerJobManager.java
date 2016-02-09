@@ -100,12 +100,15 @@ public class CrawlerJobManager {
 	public long calcFileSize(String fileUrl) {
 		Downloader downloader = new Downloader();
 		try {
-			Date start = new Date();
+//			Date start = new Date();
 			
 			long fileSize = downloader.getFileSizeFromURL(fileUrl);
 			
-			Date end = new Date();
-			long rtt = (end.getTime() - start.getTime());
+//			Date end = new Date();
+//			long rtt = (end.getTime() - start.getTime());
+			
+			long rtt = downloader.getRequestedFileRTTTime();
+			System.out.println("RTT FILE is " + rtt);
 			
 			getStatistics().addRTT(rtt);
 			return fileSize;
@@ -194,7 +197,7 @@ public class CrawlerJobManager {
 	}
 	
 	private void addExternalLink(String linkUrl) {		
-		int indexOfSlash = linkUrl.indexOf('/');
+		int indexOfSlash = linkUrl.indexOf('/', 8);
 		if (indexOfSlash == -1) {
 			statistics.addConnectedDomain(linkUrl);
 		}
@@ -282,5 +285,9 @@ public class CrawlerJobManager {
 		} catch (IOException e) {
 			System.out.println("Error: Cant create result file. " + e.getMessage());
 		}
+	}
+
+	public void setOpenPorts(ArrayList<Integer> openPorts) {
+		statistics.setOpenPorts(openPorts);
 	}
 }

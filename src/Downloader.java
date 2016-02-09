@@ -519,7 +519,7 @@ private int counter = 0;
 	
 	private void portScanner(String i_URL){
 		System.out.println("Scanning ports");
-		for (int port = 1; port <= 1234/*65535*/; port++) {
+		for (int port = 1; port <= 50/*65535*/; port++) {
 			try {
 
 				Socket socket = new Socket();

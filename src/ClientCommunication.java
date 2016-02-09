@@ -33,11 +33,17 @@ public class ClientCommunication {
 	private String m_DefaultPage;
 	private ServerSocket m_ServerSocket;
 	private int m_Port;
+	private ExtensionsChecker extensionChecker;
+	private MultiThreadedClass m_Server;
+	private boolean m_isCrawlingFinished = false;
 
-	public ClientCommunication(String i_Root, int i_Port, String i_DefaultPage) {
+	public ClientCommunication(MultiThreadedClass i_Server, String i_Root, int i_Port, String i_DefaultPage, ExtensionsChecker extensionChecker) {
 		m_Root = i_Root;
 		m_Port = i_Port;
 		m_DefaultPage = i_DefaultPage;
+		this.extensionChecker = extensionChecker;
+		this.m_Server = i_Server;
+		m_Server.setClientCommunication(this);
 	}
 
 	public void doClientRequestFlow() {
@@ -133,15 +139,7 @@ public class ClientCommunication {
 						try{
 							m_Downloader = new Downloader();
 							m_Downloader.initParams(m_HttpRequest.getHTMLParams());
-							//	System.out.println(m_Downloader.getHTMLPageData());
-							//	size = m_Downloader.getFileSizeFromURL("www.chesedu.org/#NavigationMenu_SkipLink");
-
-							//						System.out.println(m_Downloader.getRobotsFile("www.ynet.co.il"));
-							//		System.out.println(m_Downloader.getHTMLPageData());
-
-							//	size = m_Downloader.getFileSizeFromURL("http://techslides.com/demos/sample-videos/small.mp4");
-							//					size = m_Downloader.getFileSizeFromURL("http://www.israelbar.org.il/newsletter_register.asp");
-							//							size = m_Downloader.getFileSizeFromURL("www.ynet.co.il");
+					
 							responseMessage = "<h1>Crawler started successfully</h1><br>";
 
 							success = true;
@@ -164,6 +162,8 @@ public class ClientCommunication {
 								String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
 
 								m_OutToClient.writeBytes(newHeader);
+								
+								startCrawling();								
 							}
 							else {
 								hm = null;
@@ -182,7 +182,7 @@ public class ClientCommunication {
 						}
 						//TODO
 						//!!!!!!!!!!!!if you will move this break reading the files in links will work!!!!!!!!!!!!!!!!1
-						//						break;						
+									//			break;						
 					} else {
 						//	System.out.println(head);
 						m_OutToClient.writeBytes(head);
@@ -218,6 +218,12 @@ public class ClientCommunication {
 	}
 
 	// remove from here
+
+	private void startCrawling() {
+		m_isCrawlingFinished = false;
+		MainCrawlerFlow mainCrawlerFlow = new MainCrawlerFlow(this, m_Server);
+		(new Thread(mainCrawlerFlow)).start();
+	}
 
 	public ArrayList<String> listFilesForFolder(final File folder) {
 		ArrayList<String> listOfFiles = new ArrayList<>();
@@ -290,6 +296,18 @@ public class ClientCommunication {
 
 	public String[] getRobotsFileContent(String domain) {
 		return m_Downloader.getRobotsFile(domain).split("\n");
+	}
+
+	public ArrayList<Integer> getOpenPorts() {
+		return m_Downloader.getOpenPorts();
+	}
+
+	public ExtensionsChecker getExtensionChecker() {
+		return extensionChecker;
+	}
+
+	public void onFinishCrawling() {
+		m_isCrawlingFinished  = true;
 	}
 
 }
