@@ -186,7 +186,7 @@ public class ClientCommunication {
 								}
 							}
 						}
-						break;											
+//						break;											
 					} else {
 					//	System.out.println(head);
 						m_OutToClient.writeBytes(head);
@@ -294,7 +294,6 @@ public class ClientCommunication {
 	
 	public String[] getRobotsFileContent(String domain) {
 		return m_Downloader.getRobotsFile(domain).split("\n");
-//		return m_Downloader.getRobotsFile("w").split("\r\n");
 	}
 
 }
