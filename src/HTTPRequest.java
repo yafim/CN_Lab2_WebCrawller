@@ -484,7 +484,7 @@ public class HTTPRequest {
 			// Should'nt get here
 			System.out.println(aofe.getMessage());
 			System.out.println("Something went wrong...");
-		} catch (FileNotImplementedException fnse){
+		} catch (FileNotImplementedException fnse){ 
 			m_ResponseMessage = ERR_NOT_IMPEMENTED;
 			createResponseHeader();
 		} catch (Exception e){
@@ -511,7 +511,7 @@ public class HTTPRequest {
 	 */
 	private void handleFileRequest() throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException, FileNotFoundException, FileNotImplementedException{
 		try{
-			m_FileExtension = m_RequestedFileFullPath.getName().split("\\.")[1];
+			m_FileExtension = m_RequestedFileFullPath.getName().substring(m_RequestedFileFullPath.getName().lastIndexOf('.') + 1);
 		} catch (Exception e){
 			throw new FileNotFoundException();
 		}

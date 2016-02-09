@@ -467,10 +467,12 @@ public class Downloader{
 		String fixedFileURL = FilePath.contains("http://") ? FilePath.replace("http://", "") : FilePath;
 		return fixedFileURL.contains("www.") ? fixedFileURL.replace("www.", "") : fixedFileURL;
 	}
-
+private int counter = 0;
 	public void initParams(HashMap<String, String> i_Params) throws Exception{
 		parseParams(i_Params);
 		getHTTPRequestData(false, m_URL);
+		System.out.println("INIT PARAMS : " + counter);
+		counter++;
 		//checkRobotsFile();
 		if (m_IsTCP){
 			m_OpenPorts = new ArrayList<>();
