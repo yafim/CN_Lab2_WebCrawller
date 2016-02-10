@@ -186,7 +186,7 @@ public class ClientCommunication {
 								}
 							}
 						}
-//						break;											
+						break;											
 					} else {
 					//	System.out.println(head);
 						m_OutToClient.writeBytes(head);
