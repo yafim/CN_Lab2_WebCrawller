@@ -43,6 +43,7 @@ public class Downloader{
 	private int m_ContentLength = 0;
 
 	private boolean m_IsChunked = false;
+	private boolean m_ErrorPageNotFound = false;
 	private boolean m_ErrorFound = false;
 	private boolean m_Robots = false;
 	private boolean m_IsFile = false;
@@ -189,14 +190,17 @@ public class Downloader{
 					header += (char) c;
 
 					if (newLineFlag == 2){
+						if (m_ErrorPageNotFound && m_Robots){
+						m_RobotsFile = "";
+					}
+						
 						if (m_ErrorFound){
 							sendHTTPRequestWithDifferentURL(m_URLHeaders.get("Location"), onlyHeaders);
 						}
+						
 						else {
 							if(!onlyHeaders){
 								if (!m_IsChunked){
-									//TODO: 
-									//	setHTMLPageData(i_Reader);
 									setHTMLPageData(i_Reader);
 								}
 								else {
@@ -229,7 +233,7 @@ public class Downloader{
 	 */
 	private void setHeader(String i_Header){
 		String[] splittedString;
-		System.out.println(i_Header);
+		//System.err.println(i_Header);
 		try{
 			splittedString = i_Header.replaceAll("\\s","").split(":", 2);
 			if (splittedString[0].toLowerCase().equals("content-length")){
@@ -245,6 +249,9 @@ public class Downloader{
 					splittedString[1].contains("301 Moved Permanently")
 					){
 				m_ErrorFound = true;
+			}
+			if (splittedString[1].contains("404 Not Found")){
+				m_ErrorPageNotFound = true;
 			}
 		}
 
