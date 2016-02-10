@@ -12,7 +12,7 @@ import java.util.Date;
 
 public class Statistics {
 	private String m_Root = "C:\\serverroot";
-	
+
 	private String domain;
 	private boolean isRespectedRobot;
 	private boolean isRequestedOpenPorts;
@@ -28,72 +28,66 @@ public class Statistics {
 	private long numberOfExternalLinks = 0;
 	private long numberOfDomains = 0;
 	private ArrayList<String> connectedDomains;
-	private ArrayList<String> openedPorts;
-	private double sumOfAllRTTTimes = 0; // minutes
+	private ArrayList<Integer> openedPorts;
+	private double sumOfAllRTTTimes = 0; // millis
 	private long numberOfRTT = 0;
 
 	private Date m_CrawlerStartTime;
-	
+
 	public Statistics(String i_Domain, boolean isRespectedRobot, boolean isRequestedOpenPorts, Date i_CrawlerStartTime)
 	{
 		this.domain = i_Domain;
 		this.isRespectedRobot = isRespectedRobot;
 		this.isRequestedOpenPorts = isRequestedOpenPorts;
 		this.m_CrawlerStartTime = i_CrawlerStartTime;
-		
+
 		this.connectedDomains = new ArrayList<String>();
-		this.openedPorts = new ArrayList<String>();
 	}
-	
+
 	public synchronized void addImage(long imageSizeInBytes)
 	{
 		this.imagesSize += (imageSizeInBytes / 1000.0);
 		this.numberOfImages++;
 	}
-	
+
 	public synchronized void addVideo(long videoSize) 
 	{
 		this.videosSize += (videoSize / 1000.0);
 		this.numberOfVideos++;
 	}
-	
+
 	public synchronized void addDocument(long documentSize) 
 	{
 		this.documentsSize += (documentSize / 1000.0);
 		this.numberOfDocuments++;
 	}
-	
+
 	public synchronized void addPage(long pageSize) 
 	{
 		this.pagesSize += (pageSize / 1000.0);
 		this.numberOfPages++;
 	}
-	
+
 	public synchronized void addConnectedDomain(String domainName)
 	{
 		if (connectedDomains.contains(domainName))
 			return;
-		
+
 		this.numberOfDomains++;
 		this.connectedDomains.add(domainName);
 	}
-	
-	public synchronized void addPort(String portNumber)
-	{
-		this.openedPorts.add(portNumber);
-	}
-	
+
 	public synchronized void addRTT(long rtt)
 	{
-		this.sumOfAllRTTTimes += (rtt / 1000 / 60);
+		this.sumOfAllRTTTimes += rtt;
 		this.numberOfRTT++;
 	}
-	
+
 	public synchronized void incrementInternalLinks() 
 	{
 		this.numberOfInternalLinks++;
 	}
-	
+
 	public synchronized void incrementExternalLinks() 
 	{
 		this.numberOfExternalLinks++;
@@ -102,7 +96,7 @@ public class Statistics {
 	private double roundSize(double size) {
 		return Math.round(size * 100) / 100.0;
 	}
-	
+
 	public void print() {
 		System.out.println("The number of images is:" + numberOfImages);
 		System.out.println("The size of all images is:" + roundSize(imagesSize));
@@ -117,14 +111,14 @@ public class Statistics {
 		System.out.println("The number of all domains is:" + numberOfDomains);
 		System.out.println("The number of RTT is:" + numberOfRTT);
 		System.out.println("The sum of all RTT times is:" + sumOfAllRTTTimes);
-		
+
 		if(isRespectedRobot) {
 			System.out.println("Robots.txt file is respected");
 		} else {
 			System.out.println("Robots.txt file is not respected");
 		}
 	}
-	
+
 	public void createResultFile() throws IOException{
 		DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
 		String fileName = domain + "_" + dateFormat.format(m_CrawlerStartTime);
@@ -132,25 +126,25 @@ public class Statistics {
 		String path = m_Root + File.separator + "CrawlerResults" + File.separator + fileName + ".html";
 		// Use relative path for Unix systems
 		File f = new File(path);
-//			System.out.println(fileName + "created");
-		
+		//			System.out.println(fileName + "created");
+
 		//write to file
 		Writer writer = null;
 
 		try {
-		    writer = new BufferedWriter(new OutputStreamWriter(
-		          new FileOutputStream(f), "utf-8"));
-		    writer.write(getCrawlerStatistics());
+			writer = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(f), "utf-8"));
+			writer.write(getCrawlerStatistics());
 		} catch (IOException ex) {
-		  // report
+			// report
 		} finally {
-		   try {writer.close();} catch (Exception ex) {/*ignore*/}
+			try {writer.close();} catch (Exception ex) {/*ignore*/}
 		}
-		
+
 		f.getParentFile().mkdirs(); 
 		f.createNewFile();
 	}
-	
+
 	private String getCrawlerStatistics(){
 		String listOfOpenPorts = "";
 		StringBuilder str = new StringBuilder();
@@ -160,64 +154,68 @@ public class Statistics {
 
 		//Number of images(from config.ini)
 		str.append("Number of images: " + numberOfImages + "<br>");
-		
+
 		//Total size (in bytes) of images
 		str.append("Total size (in kilobytes) of images: " + imagesSize + " <br>");
 
-//		Number of videos(from config.ini)
+		//		Number of videos(from config.ini)
 		str.append("Number of videos: " + numberOfVideos + "<br>");
 
-//		Total size (in bytes) of videos
+		//		Total size (in bytes) of videos
 		str.append("Total size (in kilobytes) of videos: " + videosSize + " <br>");
 
-//		Number of document (from config.ini)
+		//		Number of document (from config.ini)
 		str.append("Number of documents: " + numberOfDocuments + " <br>");
 
-//		Total size (in bytes) of documents
+		//		Total size (in bytes) of documents
 		str.append("Total size (in kilobytes) of documents: " + documentsSize + " <br>");
 
-//		Number of pages(all detected files excluding images, videosand documents).
+		//		Number of pages(all detected files excluding images, videosand documents).
 		str.append("Number of pages: " + numberOfPages + " <br>");
 
-//		Total size (in bytes) of pages
+		//		Total size (in bytes) of pages
 		str.append("Total size (in kilobytes) of pages: " + pagesSize + " <br>");
 
-//		Number of internal links(pointing into the domain)
+		//		Number of internal links(pointing into the domain)
 		str.append("Number of internal links: " + numberOfInternalLinks + " <br>");
-				
-//		Number of external links (pointing outside the domain)
+
+		//		Number of external links (pointing outside the domain)
 		str.append("Number of external links: " + numberOfExternalLinks + " <br>");
 
-//		Number of domains the crawled domain is connected to
+		//		Number of domains the crawled domain is connected to
 		str.append("Number of domains the crawled domain is connected to: " + numberOfDomains + " <br>");
 
-//		The domains the crawled domain is connected to
+		//		The domains the crawled domain is connected to
 		str.append("The domains the crawled domain is connected to: <br>");
-		
+
 		for (String conDomain : connectedDomains) {
 			str.append("\t" + conDomain + "<br>");
 		}
 
-//		If requested, the opened ports.
-//		if (m_Downloader.getOpenPorts() != null){
-//			for(int port : m_Downloader.getOpenPorts()){
-//				listOfOpenPorts += " " + port + " ";
-//			}
-//		} else {
-//			listOfOpenPorts = "---";
-//		}
-		str.append("If requested, the opened ports: " + listOfOpenPorts + "<br>");
+		//		If requested, the opened ports.
+		str.append("Is open ports requested: " + isRequestedOpenPorts + "<br>");
+		if (isRequestedOpenPorts){
+			for(int port : openedPorts){
+				listOfOpenPorts += " " + port + " ";
+			}
 
-//		Average RTT in milliseconds (Time passed from sending the HTTP request until received the HTTP response, excludingreading the response).
+			str.append("The opened ports: " + listOfOpenPorts + "<br>");
+		}
+		
+		//		Average RTT in milliseconds (Time passed from sending the HTTP request until received the HTTP response, excludingreading the response).
 		str.append("Average RTT in milliseconds: " + getAvgRTTInMillis() + "<br>");
-		
+
 		str.append("<a href='../'>BACK</a><br></body></html>");
-		
+
 		return str.substring(0, str.length());
 	}
 
 	private double getAvgRTTInMillis() {
-		return roundSize((sumOfAllRTTTimes / numberOfRTT) * 1000 * 60);
+		return roundSize(sumOfAllRTTTimes / numberOfRTT);
 	}
-	
+
+	public void setOpenPorts(ArrayList<Integer> openPorts) {
+		this.openedPorts = openPorts;
+	}
+
 }

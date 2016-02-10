@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class HTTPRequest {
 	private String m_DefaultPage;
 
 	private boolean m_IsValidRequest = false;
-	private static boolean m_IsValidReferer = true;
+	private static boolean m_IsValidReferer = false;
 
 	// Default is 200
 	private String m_ResponseMessage = OK_MSG;
@@ -95,7 +96,7 @@ public class HTTPRequest {
 
 		return m_FileParmas;
 	}
-
+	
 	/**
 	 * Get the variables after post message sent
 	 */
@@ -150,7 +151,7 @@ public class HTTPRequest {
 			m_ExecResultError = i_ExecResultError;
 		}
 		// print HTTP request to console
-		//System.err.println(m_HTTPRequest);
+//		System.err.println(m_HTTPRequest);
 
 
 		try{
@@ -451,8 +452,11 @@ public class HTTPRequest {
 	 */
 	private void buildResponseMessage(boolean i_PrintFileContent, boolean i_IncludeConetnt) throws Exception{
 		try{
+			
 			if (m_HTTPMethod != HttpMethod.POST || !m_IsValidReferer){
-				if (m_RequestedFileFullPath.getName().equals("execResult.html")){
+				if (m_RequestedFileFullPath.getName().equals("execResult.html") ||
+						(m_RequestedFileFullPath.getAbsolutePath().contains("CrawlerResults") && !m_IsValidReferer)
+						){
 					throw new Exception("403");
 				}
 			}
@@ -484,7 +488,7 @@ public class HTTPRequest {
 			// Should'nt get here
 			System.out.println(aofe.getMessage());
 			System.out.println("Something went wrong...");
-		} catch (FileNotImplementedException fnse){
+		} catch (FileNotImplementedException fnse){ 
 			m_ResponseMessage = ERR_NOT_IMPEMENTED;
 			createResponseHeader();
 		} catch (Exception e){
@@ -511,7 +515,7 @@ public class HTTPRequest {
 	 */
 	private void handleFileRequest() throws ArrayIndexOutOfBoundsException, UnsupportedEncodingException, FileNotFoundException, FileNotImplementedException{
 		try{
-			m_FileExtension = m_RequestedFileFullPath.getName().split("\\.")[1];
+			m_FileExtension = m_RequestedFileFullPath.getName().substring(m_RequestedFileFullPath.getName().lastIndexOf('.') + 1);
 		} catch (Exception e){
 			throw new FileNotFoundException();
 		}
@@ -524,12 +528,29 @@ public class HTTPRequest {
 				// open file...
 				if (!m_IsChunked){
 					m_RequestedFileContent = readFile(m_RequestedFileFullPath);
+					
+					String filePath = "";
+					String responseMessage = "";
+					byte[] listOfFilesAsBytes;
+
+					for(String fileName : listFilesForFolder(new File("c:/serverroot/CrawlerResults/")/*CRAWLER_FOLDER*/)){
+						filePath = "CrawlerResults" + File.separator + fileName;
+						responseMessage += "<a href='" + filePath + "'>" + fileName + "</a><br>";
+					}
+					listOfFilesAsBytes = new byte[responseMessage.length()];
+					listOfFilesAsBytes = responseMessage.getBytes();
+					
+					byte[] c1 = new byte[m_RequestedFileContent.length + listOfFilesAsBytes.length];						
+					System.arraycopy(m_RequestedFileContent, 0, c1, 0, m_RequestedFileContent.length);
+					System.arraycopy(listOfFilesAsBytes, 0, c1, m_RequestedFileContent.length, listOfFilesAsBytes.length);
+					m_RequestedFileContent = c1;
+					
+					
 					if (m_GoToDefaultPage){
 						byte[] c = new byte[m_ExecResultError.length + m_RequestedFileContent.length];						
 						System.arraycopy(m_ExecResultError, 0, c, 0, m_ExecResultError.length);
 						System.arraycopy(m_RequestedFileContent, 0, c, m_ExecResultError.length, m_RequestedFileContent.length);
 						m_RequestedFileContent = c;
-
 					}
 				}
 			}
@@ -719,7 +740,7 @@ boolean m_Error = false; // TODO
 	public void clear(){
 		/** HTTP request variables */
 		m_GoToDefaultPage = false;
-		m_IsValidReferer = true;
+		m_IsValidReferer = false;
 		m_IsValidRequest = false;
 		m_HTTPRequest = "";
 		m_SplitHTTPRequest = null;	
@@ -844,6 +865,20 @@ boolean m_Error = false; // TODO
 
 			System.out.println("KEY : " + key + " - VALUE : " + value);
 		}
+	}
+	
+	private ArrayList<String> listFilesForFolder(final File folder) {
+		ArrayList<String> listOfFiles = new ArrayList<>();
+
+		for (final File fileEntry : folder.listFiles()) {
+			if (fileEntry.isDirectory()) {
+				listFilesForFolder(fileEntry);
+			} else {
+				listOfFiles.add(fileEntry.getName());
+			}
+		}
+
+		return listOfFiles;
 	}
 
 	/**

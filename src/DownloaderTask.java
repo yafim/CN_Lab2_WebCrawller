@@ -18,10 +18,12 @@ public class DownloaderTask extends CrawlerTask{
 		System.out.println("Downloader starts downloading URL " + url);
 		Downloader downloader;
 		try {
-			Date start = new Date();
+//			Date start = new Date();
 			downloader = new Downloader(url);
-			Date end = new Date();
-			long rtt = (end.getTime() - start.getTime());
+//			Date end = new Date();
+//			long rtt = (end.getTime() - start.getTime());
+			long rtt = downloader.getRTTTime();
+			System.out.println("RTT is " + rtt);
 			crawlerJobManager.getStatistics().addRTT(rtt);
 			
 			String content = downloader.getHTMLPageData();

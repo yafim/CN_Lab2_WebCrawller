@@ -44,20 +44,14 @@ public class Main {
 			
 			server = new MultiThreadedClass(m_Port, m_Root, m_DefaultPage);
 			server.startTheServer(m_MaxThreads, m_MaxDownloaders, m_MaxAnalyzers);
+			
 			System.out.println("Listening on port " + m_Port);
-			ClientCommunication clientCommunication = new ClientCommunication(m_Root, m_Port, m_DefaultPage);
+			ExtensionsChecker extensionChecker = new ExtensionsChecker(m_ImageExtensions, m_VideoExtensions, m_DocumentExtensions);
+			
+			ClientCommunication clientCommunication = new ClientCommunication(server, m_Root, m_Port, m_DefaultPage, extensionChecker);
 			clientCommunication.doClientRequestFlow();
 			
-			Date crawlerStartTime = new Date();
-			String requestedUrl = clientCommunication.getRequestedUrl();
-			boolean isRespectedRobotFile = clientCommunication.isRobotFileRespected();
-			boolean isRequestedTcpPortsScan = clientCommunication.isTCPOpenPortsRequested();
-			String[] robotsFileContent = clientCommunication.getRobotsFileContent(requestedUrl);
-
-			ExtensionsChecker extensionChecker = new ExtensionsChecker(m_ImageExtensions, m_VideoExtensions, m_DocumentExtensions);
-			// change it
-			CrawlerJobManager crawlerManager = new CrawlerJobManager(server, requestedUrl, isRespectedRobotFile, isRequestedTcpPortsScan, extensionChecker);
-			crawlerManager.start(robotsFileContent, crawlerStartTime);
+			
 			
 			// Remove this logic from here...
 
