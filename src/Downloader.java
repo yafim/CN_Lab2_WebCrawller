@@ -191,7 +191,8 @@ public class Downloader{
 
 					if (newLineFlag == 2){
 						if (m_ErrorPageNotFound && m_Robots){
-						m_RobotsFile = "";
+						m_RobotsFile = "no robots";
+						break;
 					}
 						
 						if (m_ErrorFound){
