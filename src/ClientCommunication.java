@@ -36,6 +36,7 @@ public class ClientCommunication {
 	private ExtensionsChecker extensionChecker;
 	private MultiThreadedClass m_Server;
 	private boolean m_isCrawlingFinished = false;
+	private boolean m_isCrawlingRunning = false;
 
 	public ClientCommunication(MultiThreadedClass i_Server, String i_Root, int i_Port, String i_DefaultPage, ExtensionsChecker extensionChecker) {
 		m_Root = i_Root;
@@ -137,9 +138,12 @@ public class ClientCommunication {
 						int size = 0;
 						boolean success = false;
 						try{
+							if (m_isCrawlingRunning){
+								throw new Exception("crawler already running...");
+							}
 							m_Downloader = new Downloader();
 							m_Downloader.initParams(m_HttpRequest.getHTMLParams());
-					
+
 							responseMessage = "<h1>Crawler started successfully</h1><br>";
 
 							success = true;
@@ -160,7 +164,7 @@ public class ClientCommunication {
 								String newHeader = head.substring(0, head.indexOf("content-length")) + "content-length: " + newLength + "\r\n\r\n" + responseMessage;
 
 								m_OutToClient.writeBytes(newHeader);
-								
+
 								startCrawling();								
 							}
 							else {
@@ -219,6 +223,7 @@ public class ClientCommunication {
 
 	private void startCrawling() {
 		m_isCrawlingFinished = false;
+		m_isCrawlingRunning = true;
 		MainCrawlerFlow mainCrawlerFlow = new MainCrawlerFlow(this, m_Server);
 		(new Thread(mainCrawlerFlow)).start();
 	}
@@ -305,7 +310,9 @@ public class ClientCommunication {
 	}
 
 	public void onFinishCrawling() {
+		m_isCrawlingRunning = false;
 		m_isCrawlingFinished  = true;
+		System.out.println();
 	}
 
 }
